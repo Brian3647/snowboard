@@ -2,7 +2,7 @@
 
 A 0-dependency library for fast & simple TCP servers in rust
 
-\[[Request a feature/Report a bug](https://Brian3647/snowboard/issues)\]
+\[[Request a feature/Report a bug](https://github.com/Brian3647/snowboard/issues)\]
 
 ## **Quick start**
 
