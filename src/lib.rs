@@ -32,19 +32,71 @@ pub struct Server {
 
 impl Server {
     /// Create a new server instance.
-    pub fn new(addr: String) -> Self {
+    /// The server will not start until the `run` method is called.
+    /// The `addr` parameter is a string in the format of `host:port`.
+    ///
+    /// # Example
+    /// See the `basic` example in `examples/basic`.
+    pub fn new<T: Into<String>>(addr: T) -> Self {
         Self {
-            addr,
+            addr: addr.into(),
             on_request: None,
             middleware: vec![],
         }
     }
 
+    /// Set the handler function.
+    /// This function will be called when a request is received.
+    /// If no handler is set, the server will respond with a 503 Service Unavailable.
+    ///
+    /// # Example
+    /// ```
+    /// use snowboard::Server;
+    ///
+    /// Server::new("localhost:8080")
+    ///     on_request(|request| {
+    ///         println!("{:?}", request);
+    ///
+    ///         snowboard::response!(ok, "Hello, world!")
+    ///     })
+    ///     .run();
+    /// ```
     pub fn on_request(&mut self, handler: Handler) -> &mut Self {
         self.on_request = Some(handler);
         self
     }
 
+    /// Add a middleware function.
+    /// Middleware functions are called before the handler function.
+    /// They can be used to modify the request or to return a response.
+    /// If a response is returned, the handler function will not be called.
+    /// If multiple middleware functions are added, they will be called in the order they were added.
+    ///
+    /// # Example
+    /// ```
+    /// use snowboard::Server;
+    ///
+    /// let server = Server::new("localhost:8080");
+    ///
+    /// server.add_middleware(|mut request| {
+    ///    request.set_header("X-Server", "Snowboard");
+    ///
+    ///    // Request, Response
+    ///    (request, None)
+    /// });
+    /// ```
+    ///
+    /// # Example 2
+    /// ```
+    /// use snowboard::Server;
+    ///
+    /// let server = Server::new("localhost:8080");
+    ///
+    /// server.add_middleware(|request| {
+    ///    // Request, Response
+    ///   (request, Some(snowboard::response!(ok, "Hello, world!")))
+    /// });
+    /// ```
     pub fn add_middleware(&mut self, handler: Middleware) -> &mut Self {
         self.middleware.push(handler);
         self

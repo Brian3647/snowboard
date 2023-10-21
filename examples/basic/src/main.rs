@@ -1,7 +1,7 @@
 use snowboard::Server;
 
 fn main() {
-    Server::new("localhost:8080".into())
+    Server::new("localhost:8080")
         .add_middleware(|mut request| {
             request.set_header("X-Server", "Snowboard");
 

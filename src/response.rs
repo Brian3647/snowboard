@@ -108,6 +108,7 @@ macro_rules! create_response_types {
     ($($name:ident, $code:expr, $text:expr);*) => {
         impl Response {
         $(
+            /// Create a response with the given body and headers.
             pub fn $name(body: Option<String>, headers: Option<Vec<(String, String)>>) -> Self {
                 let mut headers = headers.unwrap_or_default();
 
