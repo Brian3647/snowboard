@@ -1,5 +1,9 @@
 # **Snowboard 🏂**
 
+![License](https://img.shields.io/github/license/Brian3647/snowboard)
+![GitHub issues](https://img.shields.io/github/issues/Brian3647/snowboard)
+![Build status](https://img.shields.io/github/actions/workflow/status/Brian3647/snowboard/rust.yml)
+
 A 0-dependency library for fast & simple TCP servers in rust
 
 \[[Request a feature/Report a bug](https://github.com/Brian3647/snowboard/issues)\]
