@@ -1,4 +1,4 @@
-# **Snowboard :snowboarder:**
+# **Snowboard 🏂**
 
 A 0-dependency library for fast & simple TCP servers in rust
 
@@ -16,14 +16,20 @@ snowboard = "*"
 Then, create a new Rust file with the following code:
 
 ```rs
-use snowboard::{Server, response};
+use snowboard::Server;
 
 fn main() {
     Server::new("localhost:8080".into())
+        .add_middleware(|mut request| {
+            request.set_header("X-Server", "Snowboard");
+
+            (request, None)
+        })
         .on_request(|request| {
             println!("{:?}", request);
+            assert_eq!(request.get_header("X-Server"), Some(&"Snowboard".into()));
 
-            response!(ok, "Hello, world!")
+            snowboard::response!(ok, "Hello, world!")
         })
         .run();
 }

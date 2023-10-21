@@ -19,10 +19,15 @@ pub const BUFFER_SIZE: usize = 8192;
 /// A type alias for any handler function.
 pub type Handler = fn(request: Request) -> Response;
 
-/// A 0-dependency crate for building http servers.
+/// Middleware function. Returns a tuple of the modified request and an optional response.
+/// If the response is not `None`, the request will be ignored and the response will be sent.
+pub type Middleware = fn(request: Request) -> (Request, Option<Response>);
+
+/// Simple server struct
 pub struct Server {
     addr: String,
     on_request: Option<Handler>,
+    middleware: Vec<Middleware>,
 }
 
 impl Server {
@@ -31,6 +36,7 @@ impl Server {
         Self {
             addr,
             on_request: None,
+            middleware: vec![],
         }
     }
 
@@ -39,8 +45,13 @@ impl Server {
         self
     }
 
+    pub fn add_middleware(&mut self, handler: Middleware) -> &mut Self {
+        self.middleware.push(handler);
+        self
+    }
+
     /// Start the server.
-    pub fn run(&self) {
+    pub fn run(&self) -> ! {
         println!("Listening on {}", self.addr);
 
         let listener = TcpListener::bind(&self.addr).unwrap();
@@ -54,13 +65,18 @@ impl Server {
     }
 
     fn spawn_handler(&self, listener: (TcpStream, SocketAddr)) {
+        let middleware = self.middleware.clone();
         let handler = self.on_request;
 
-        thread::spawn(move || handle_request(listener, handler));
+        thread::spawn(move || handle_request(listener, handler, middleware));
     }
 }
 
-fn handle_request(listener: (TcpStream, SocketAddr), on_request: Option<Handler>) {
+fn handle_request(
+    listener: (TcpStream, SocketAddr),
+    handler: Option<Handler>,
+    middleware: Vec<Middleware>,
+) {
     let (mut stream, ip) = listener;
 
     let mut buffer = [0; BUFFER_SIZE];
@@ -87,8 +103,20 @@ fn handle_request(listener: (TcpStream, SocketAddr), on_request: Option<Handler>
         .replace("\0", "")
         .to_string();
 
-    let request = Request::new(text, ip);
-    let res = match on_request {
+    let mut request = Request::new(text, ip);
+
+    for middlewarefn in middleware {
+        let (req, res) = middlewarefn(request.clone());
+
+        if let Some(response) = res {
+            response.send(&mut stream);
+            return;
+        }
+
+        request = req;
+    }
+
+    let res = match handler {
         Some(handler) => handler(request),
         None => Response::service_unavailable(None, None),
     };

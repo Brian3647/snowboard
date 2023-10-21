@@ -62,4 +62,12 @@ impl Request {
             .unwrap_or(&default.to_string())
             .to_string()
     }
+
+    pub fn set_header<T, K>(&mut self, key: T, value: K)
+    where
+        T: Into<String>,
+        K: Into<String>,
+    {
+        self.headers.insert(key.into(), value.into());
+    }
 }
