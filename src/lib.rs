@@ -165,7 +165,7 @@ fn handle_request(
     }
 
     let text = String::from_utf8_lossy(&buffer)
-        .replace("\0", "")
+        .replace('\0', "")
         .to_string();
 
     let mut request = Request::new(text, ip);
