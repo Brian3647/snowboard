@@ -14,7 +14,7 @@ use std::{
 
 /// The size of the buffer used to read incoming requests.
 /// It's set to 8KB (8192 bytes).
-pub const BUFFER_SIZE: usize = 8192;
+pub const DEFAULT_BUFFER_SIZE: usize = 8192;
 
 /// A type alias for any handler function.
 pub type Handler = fn(request: Request) -> Response;
@@ -28,6 +28,7 @@ pub struct Server {
     addr: String,
     on_request: Option<Handler>,
     middleware: Vec<Middleware>,
+    buffer_size: usize,
 }
 
 impl Server {
@@ -42,7 +43,16 @@ impl Server {
             addr: addr.into(),
             on_request: None,
             middleware: vec![],
+            buffer_size: DEFAULT_BUFFER_SIZE,
         }
+    }
+
+    /// Sest the buffer size.
+    /// The buffer size is used to read incoming requests.
+    /// The default buffer size is 8KB (8192 bytes).
+    pub fn set_buffer_size(&mut self, new_size: usize) -> &mut Self {
+        self.buffer_size = new_size;
+        self
     }
 
     /// Set the handler function.
@@ -120,8 +130,9 @@ impl Server {
     fn spawn_handler(&self, listener: (TcpStream, SocketAddr)) {
         let middleware = self.middleware.clone();
         let handler = self.on_request;
+        let buffer_size = self.buffer_size;
 
-        thread::spawn(move || handle_request(listener, handler, middleware));
+        thread::spawn(move || handle_request(listener, handler, middleware, buffer_size));
     }
 }
 
@@ -129,10 +140,11 @@ fn handle_request(
     listener: (TcpStream, SocketAddr),
     handler: Option<Handler>,
     middleware: Vec<Middleware>,
+    buffer_size: usize,
 ) {
     let (mut stream, ip) = listener;
 
-    let mut buffer = [0; BUFFER_SIZE];
+    let mut buffer = vec![0; buffer_size];
     let read_result = stream.read(&mut buffer);
 
     if read_result.is_err() {
@@ -146,7 +158,7 @@ fn handle_request(
 
     let payload_size = read_result.unwrap();
 
-    if payload_size > BUFFER_SIZE {
+    if payload_size > buffer_size {
         let res = Response::payload_too_large(None, None);
         res.send(&mut stream);
         return;
