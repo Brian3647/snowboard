@@ -74,7 +74,7 @@ impl Display for Response {
 ///
 /// Usage:
 /// ```
-/// use snowboard::Response;
+/// use snowboard::response;
 ///
 /// // Response with no headers and no body.
 /// let response = response!(bad_request);

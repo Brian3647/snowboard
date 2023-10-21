@@ -53,13 +53,14 @@ impl Server {
     /// ```
     /// use snowboard::Server;
     ///
-    /// Server::new("localhost:8080")
-    ///     on_request(|request| {
+    /// let server = Server::new("localhost:8080")
+    ///     .on_request(|request| {
     ///         println!("{:?}", request);
     ///
     ///         snowboard::response!(ok, "Hello, world!")
-    ///     })
-    ///     .run();
+    ///     });
+    ///
+    /// // server.run();
     /// ```
     pub fn on_request(&mut self, handler: Handler) -> &mut Self {
         self.on_request = Some(handler);
@@ -76,7 +77,7 @@ impl Server {
     /// ```
     /// use snowboard::Server;
     ///
-    /// let server = Server::new("localhost:8080");
+    /// let mut server = Server::new("localhost:8080");
     ///
     /// server.add_middleware(|mut request| {
     ///    request.set_header("X-Server", "Snowboard");
@@ -90,7 +91,7 @@ impl Server {
     /// ```
     /// use snowboard::Server;
     ///
-    /// let server = Server::new("localhost:8080");
+    /// let mut server = Server::new("localhost:8080");
     ///
     /// server.add_middleware(|request| {
     ///    // Request, Response
