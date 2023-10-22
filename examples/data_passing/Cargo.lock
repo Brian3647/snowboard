@@ -3,7 +3,7 @@
 version = 3
 
 [[package]]
-name = "ping"
+name = "data_passing"
 version = "0.1.0"
 dependencies = [
  "snowboard",

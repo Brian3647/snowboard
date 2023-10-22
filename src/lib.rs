@@ -17,33 +17,37 @@ use std::{
 pub const DEFAULT_BUFFER_SIZE: usize = 1024 * 8;
 
 /// A type alias for any handler function.
-pub type Handler = fn(request: Request) -> Response<'static>;
+pub type Handler<T> = fn(request: Request, data: &T) -> Response<'static>;
 
 /// Middleware function. Returns a tuple of the modified request and an optional response.
 /// If the response is not `None`, the request will be ignored, and the response will be sent.
-pub type Middleware = fn(request: Request) -> (Request, Option<Response<'static>>);
+pub type Middleware<T> = fn(request: Request, data: &T) -> (Request, Option<Response<'static>>);
 
 /// Simple server struct
-pub struct Server {
+pub struct Server<T: Clone + Send + 'static> {
     addr: String,
-    on_request: Option<Handler>,
-    middleware: Vec<Middleware>,
+    on_request: Option<Handler<T>>,
+    on_load: Option<fn(&T) -> ()>,
+    middleware: Vec<Middleware<T>>,
     buffer_size: usize,
+    data: T,
 }
 
-impl Server {
+impl<T: Clone + Send + 'static> Server<T> {
     /// Create a new server instance.
     /// The server will not start until the `run` method is called.
     /// The `addr` parameter is a string in the format of `host:port`.
     ///
     /// # Example
     /// See the `basic` example in `examples/basic`.
-    pub fn new(addr: &str) -> Self {
+    pub fn new(addr: &str, data: T) -> Self {
         Self {
             addr: addr.into(),
             on_request: None,
             middleware: vec![],
             buffer_size: DEFAULT_BUFFER_SIZE,
+            data,
+            on_load: None,
         }
     }
 
@@ -74,8 +78,15 @@ impl Server {
     ///
     /// // server.run();
     /// ```
-    pub fn on_request(&mut self, handler: Handler) -> &mut Self {
+    pub fn on_request(&mut self, handler: Handler<T>) -> &mut Self {
         self.on_request = Some(handler);
+        self
+    }
+
+    /// Set the on load function.
+    /// This function will be called when the server starts.
+    pub fn on_load(&mut self, run: fn(&T) -> ()) -> &mut Self {
+        self.on_load = Some(run);
         self
     }
 
@@ -110,23 +121,27 @@ impl Server {
     ///   (request, Some(snowboard::response!(ok, "Hello, world!")))
     /// });
     /// ```
-    pub fn add_middleware(&mut self, handler: Middleware) -> &mut Self {
+    pub fn add_middleware(&mut self, handler: Middleware<T>) -> &mut Self {
         self.middleware.push(handler);
         self
     }
 
     /// Start the server.
     pub fn run(&self) -> ! {
-        println!("Listening on {}", self.addr);
-
         let listener = TcpListener::bind(&self.addr).unwrap();
+
+        if let Some(on_load) = self.on_load {
+            on_load(&self.data);
+        }
+
         while let Ok(req) = listener.accept() {
             let middleware = self.middleware.clone();
             let handler = self.on_request;
             let buffer_size = self.buffer_size;
+            let data = self.data.clone();
 
             thread::spawn(move || {
-                handle_request(req, handler, middleware, buffer_size);
+                handle_request(req, handler, middleware, buffer_size, data);
             });
         }
 
@@ -134,11 +149,12 @@ impl Server {
     }
 }
 
-fn handle_request(
+fn handle_request<T>(
     stream: (TcpStream, SocketAddr),
-    handler: Option<Handler>,
-    middleware: Vec<Middleware>,
+    handler: Option<Handler<T>>,
+    middleware: Vec<Middleware<T>>,
     buffer_size: usize,
+    data: T,
 ) {
     let (mut stream, ip) = stream;
 
@@ -166,7 +182,7 @@ fn handle_request(
     let mut request = Request::new(text, ip);
 
     for middlewarefn in &middleware {
-        let (req, res) = middlewarefn(request.clone());
+        let (req, res) = middlewarefn(request.clone(), &data);
 
         if let Some(response) = res {
             response.send(&mut stream);
@@ -177,7 +193,7 @@ fn handle_request(
     }
 
     let res = match handler {
-        Some(handler) => handler(request),
+        Some(handler) => handler(request, &data),
         None => Response::service_unavailable(None, None, None),
     };
 

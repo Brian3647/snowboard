@@ -25,7 +25,7 @@ $EXECUTABLE > server.log 2>&1 &
 
 # Send a bunch of curl requests to the server and get the total time
 echo "Sending requests..."
-time for i in {1..10000}; do curl -s http://localhost:8080/ping > /dev/null; done
+time for i in {1..10000}; do curl -s http://localhost:8080/ > /dev/null; done
 
 # Kill the program
 kill $(lsof -t -i:8080)

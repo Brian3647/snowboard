@@ -23,11 +23,12 @@ Then, create a new Rust file with the following code:
 use snowboard::{Server, response};
 
 fn main() {
-    Server::new("localhost:8080".into())
-        .on_request(|request| {
+    let data = "Hello, world!";
+    Server::new("localhost:8080".into(), data)
+        .on_request(|request, my_data| {
             println!("{:?}", request);
 
-            response!(ok, "Hello, world!")
+            response!(ok, my_data)
         })
         .run();
 }
@@ -45,8 +46,9 @@ Adding middleware is extremely easy. You can use the `.add_middleware` function 
 use snowboard::{response, Method, Server};
 
 fn main() {
-    Server::new("localhost:8080")
-        .add_middleware(|mut request| {
+    let data = "Hello, world!";
+    Server::new("localhost:8080", data)
+        .add_middleware(|mut request, _| {
             if request.method != Method::GET {
                 let res = response!(method_not_allowed, "Use GET!");
                 return (request, Some(res));
@@ -56,12 +58,42 @@ fn main() {
 
             (request, None)
         })
-        .on_request(|request| {
+        .on_request(|request, msg| {
             println!("{:?}", request);
             assert_eq!(request.method, Method::GET);
             assert_eq!(request.get_header("X-Server"), Some("Snowboard"));
 
-            response!(ok, "Hello, world!")
+            response!(ok, msg)
+        })
+        .run();
+}
+```
+
+### **Passing data**
+
+You can create an original data variable and get its reference on every middleware function/at the handler. You can use anything that implements `Clone` as data:
+
+```rust
+use snowboard::{response, Method, Server};
+
+#[derive(Clone)]
+struct ServerData {
+    hello: String
+}
+
+fn main() {
+    let data = ServerData {
+        hello: "hi!".into()
+    };
+
+    Server::new("localhost:8080", data)
+        .on_request(|request, my_data| {
+            println!("{:?}", request);
+            assert_eq!(request.method, Method::GET);
+            assert_eq!(request.get_header("X-Server"), Some("Snowboard"));
+
+            // Access the data
+            response!(ok, my_data.hello)
         })
         .run();
 }
@@ -75,6 +107,10 @@ Snowboard is designed and created for people who like coding their own things fr
 This library does not implement what most server libraries have,
 but rather offers a plain request-response system that can be heavily configured or changed based on user preference.
 It comes with the essential tools for writing whatever you want to.
+
+## **Examples**
+
+Examples can be found [here](./examples/).
 
 ## **Contributing**
 

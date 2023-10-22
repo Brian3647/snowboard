@@ -15,7 +15,7 @@ pub struct Response<'a> {
     pub version: HttpVersion,
     pub status: u16,
     pub status_text: &'a str,
-    pub body: &'a str,
+    pub body: String,
     pub headers: Vec<(&'a str, &'a str)>,
 }
 
@@ -24,7 +24,7 @@ impl<'a> Response<'a> {
         version: HttpVersion,
         status: u16,
         status_text: &'a str,
-        body: &'a str,
+        body: String,
         headers: Vec<(&'a str, &'a str)>,
     ) -> Self {
         Self {
@@ -51,7 +51,7 @@ impl<'a> Default for Response<'a> {
             version: HttpVersion::V1_1,
             status: 200,
             status_text: "OK",
-            body: "",
+            body: "".into(),
             headers: vec![],
         }
     }
@@ -82,7 +82,7 @@ impl<'a> Display for Response<'a> {
 /// let response = response!(bad_request);
 ///
 /// // Response with body and no headers.
-/// // Note that $body requires to be convertible to a String.
+/// // Note that $body requires to implement Display.
 /// let response =  response!(internal_server_error, "oopsies");
 ///
 /// // Response with body, headers and custom HTTP version.
@@ -97,15 +97,19 @@ macro_rules! response {
     };
 
     ($type:ident,$body:expr) => {
-        ::snowboard::Response::$type(Some($body.into()), None, None)
+        ::snowboard::Response::$type(Some(format!("{}", $body)), None, None)
     };
 
     ($type:ident,$body:expr,$headers:expr) => {
-        ::snowboard::Response::$type(Some($body.into()), Some($headers), None)
+        ::snowboard::Response::$type(Some(format!("{}", $body)), Some($headers), None)
     };
 
     ($type:ident,$body:expr,$headers:expr,$http_version:expr) => {
-        ::snowboard::Response::$type(Some($body.into()), Some($headers), Some($http_version))
+        ::snowboard::Response::$type(
+            Some(format!("{}", $body)),
+            Some($headers),
+            Some($http_version),
+        )
     };
 }
 
@@ -115,8 +119,8 @@ macro_rules! create_response_types {
         impl<'a> Response<'a> {
         $(
             #[inline(always)]
-            pub fn $name(body: Option<&'a str>, headers: Option<Vec<(&'a str, &'a str)>>, http_version: Option<HttpVersion>) -> Self {
-                Self::new(http_version.unwrap_or(DEFAULT_HTTP_VERSION), $code, $text, body.unwrap_or_default(), headers.unwrap_or_default())
+            pub fn $name(body: Option<String>, headers: Option<Vec<(&'a str, &'a str)>>, http_version: Option<HttpVersion>) -> Self {
+                Self::new(http_version.unwrap_or(DEFAULT_HTTP_VERSION), $code, $text.into(), body.unwrap_or_default(), headers.unwrap_or_default())
             }
         )*
         }
@@ -128,7 +132,7 @@ create_response_types!(
     switching_protocols, 101, "Switching Protocols";
     processing, 102, "Processing";
     early_hints, 103, "Early Hints";
-    ok, 200, "Ok";
+    ok, 200, "OK";
     created, 201, "Created";
     accepted, 202, "Accepted";
     non_authoritative_information, 203, "Non-Authoritative Information";
