@@ -31,7 +31,7 @@ fn main() {
         })
         .on_request(|request| {
             println!("{:?}", request);
-            assert_eq!(request.get_header("X-Server"), Some(&"Snowboard".into()));
+            assert_eq!(request.get_header("X-Server"), Some("Snowboard"));
 
             snowboard::response!(ok, "Hello, world!")
         })
