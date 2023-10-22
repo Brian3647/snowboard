@@ -93,19 +93,19 @@ impl Display for Response {
 #[macro_export]
 macro_rules! response {
     ($type:ident) => {
-        snowboard::Response::$type(None, None, None)
+        ::snowboard::Response::$type(None, None, None)
     };
 
     ($type:ident,$body:expr) => {
-        snowboard::Response::$type(Some($body.into()), None, None)
+        ::snowboard::Response::$type(Some($body.into()), None, None)
     };
 
     ($type:ident,$body:expr,$headers:expr) => {
-        snowboard::Response::$type(Some($body.into()), Some($headers), None)
+        ::snowboard::Response::$type(Some($body.into()), Some($headers), None)
     };
 
     ($type:ident,$body:expr,$headers:expr,$http_version:expr) => {
-        snowboard::Response::$type(Some($body.into()), Some($headers), Some($http_version))
+        ::snowboard::Response::$type(Some($body.into()), Some($headers), Some($http_version))
     };
 }
 
@@ -114,17 +114,9 @@ macro_rules! create_response_types {
     ($($name:ident, $code:expr, $text:expr);*) => {
         impl Response {
         $(
-            /// Create a response with the given body and headers.
+            #[inline(always)]
             pub fn $name(body: Option<String>, headers: Option<Vec<(String, String)>>, http_version: Option<HttpVersion>) -> Self {
-                let mut headers = headers.unwrap_or_default();
-
-                if let Some(b) = &body  {
-                    if !headers.iter().any(|(k, _)| k == "Content-Length") {
-                        headers.push(("Content-Length".into(), b.len().to_string()));
-                    }
-                }
-
-                Self::new(http_version.unwrap_or(DEFAULT_HTTP_VERSION), $code, $text.into(), body.unwrap_or_default(), headers)
+                Self::new(http_version.unwrap_or(DEFAULT_HTTP_VERSION), $code, String::from($text), body.unwrap_or_default(), headers.unwrap_or_default())
             }
         )*
         }
