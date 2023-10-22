@@ -13,7 +13,7 @@ use std::{
 };
 
 /// The size of the buffer used to read incoming requests.
-/// It's set to 4KB by default.
+/// It's set to 4KiB  by default.
 pub const DEFAULT_BUFFER_SIZE: usize = 1024 * 4;
 
 /// A type alias for any handler function.
