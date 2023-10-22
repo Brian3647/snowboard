@@ -58,9 +58,7 @@ impl Request {
     }
 
     pub fn get_header_or(&self, key: &str, default: &str) -> String {
-        self.get_header(key)
-            .unwrap_or(&default.to_string())
-            .to_string()
+        self.get_header(key).unwrap_or(default).to_string()
     }
 
     pub fn set_header<T, K>(&mut self, key: T, value: K)
