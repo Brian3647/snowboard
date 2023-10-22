@@ -19,27 +19,55 @@ snowboard = "*"
 
 Then, create a new Rust file with the following code:
 
-```rs
-use snowboard::Server;
+```rust
+use snowboard::{Server, response};
 
 fn main() {
     Server::new("localhost:8080".into())
-        .add_middleware(|mut request| {
-            request.set_header("X-Server", "Snowboard");
-
-            (request, None)
-        })
         .on_request(|request| {
             println!("{:?}", request);
-            assert_eq!(request.get_header("X-Server"), Some("Snowboard"));
 
-            snowboard::response!(ok, "Hello, world!")
+            response!(ok, "Hello, world!")
         })
         .run();
 }
 ```
 
 And that's it! You got yourself a working server on :8080.
+
+## **Features**
+
+### **Middleware**
+
+Adding middleware is extremely easy. You can use the `.add_middleware` function in server to change the request or directly send a response:
+
+```rust
+use snowboard::{response, Method, Server};
+
+fn main() {
+    Server::new("localhost:8080")
+        .add_middleware(|mut request| {
+            if request.method != Method::GET {
+                let res = response!(method_not_allowed, "Use GET!");
+                return (request, Some(res));
+            }
+
+            request.set_header("X-Server", "Snowboard");
+
+            (request, None)
+        })
+        .on_request(|request| {
+            println!("{:?}", request);
+            assert_eq!(request.method, Method::GET);
+            assert_eq!(request.get_header("X-Server"), Some("Snowboard"));
+
+            response!(ok, "Hello, world!")
+        })
+        .run();
+}
+```
+
+More info can be found at [`Server::add_middleware`](./src/lib.rs) in `lib.rs`.
 
 ## **Why should I use this?**
 
