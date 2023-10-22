@@ -87,7 +87,7 @@ impl<'a> Display for Response<'a> {
 ///
 /// // Response with body, headers and custom HTTP version.
 /// let body = "everything's fine!";
-/// let headers = vec![("a".into(), "b".into())];
+/// let headers = vec![("a", "b")];
 /// let response = response!(ok, body, headers, HttpVersion::V1_0);
 /// ```
 #[macro_export]
