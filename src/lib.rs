@@ -13,8 +13,8 @@ use std::{
 };
 
 /// The size of the buffer used to read incoming requests.
-/// It's set to 8KB (8192 bytes).
-pub const DEFAULT_BUFFER_SIZE: usize = 8192;
+/// It's set to 4KB by default.
+pub const DEFAULT_BUFFER_SIZE: usize = 1024 * 4;
 
 /// A type alias for any handler function.
 pub type Handler = fn(request: Request) -> Response;
@@ -51,6 +51,8 @@ impl Server {
     /// The buffer size is used to read incoming requests.
     /// The default buffer size is 8KB (8192 bytes).
     pub fn set_buffer_size(&mut self, new_size: usize) -> &mut Self {
+        assert!(new_size > 0, "Buffer size must be greater than 0");
+
         self.buffer_size = new_size;
         self
     }
@@ -128,6 +130,8 @@ impl Server {
     }
 
     fn spawn_handler(&self, listener: (TcpStream, SocketAddr)) {
+        // Clone the middleware and handler functions so they can be moved to a thread.
+
         let middleware = self.middleware.clone();
         let handler = self.on_request;
         let buffer_size = self.buffer_size;
@@ -159,7 +163,7 @@ fn handle_request(
     let payload_size = read_result.unwrap();
 
     if payload_size > buffer_size {
-        let res = Response::payload_too_large(None, None);
+        let res = Response::payload_too_large(None, None, None);
         res.send(&mut stream);
         return;
     }
@@ -183,7 +187,7 @@ fn handle_request(
 
     let res = match handler {
         Some(handler) => handler(request),
-        None => Response::service_unavailable(None, None),
+        None => Response::service_unavailable(None, None, None),
     };
 
     res.send(&mut stream);

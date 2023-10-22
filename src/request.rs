@@ -53,8 +53,8 @@ impl Request {
         }
     }
 
-    pub fn get_header(&self, key: &str) -> Option<&String> {
-        self.headers.get(key)
+    pub fn get_header(&self, key: &str) -> Option<&str> {
+        self.headers.get(key).map(|s| s.as_str())
     }
 
     pub fn get_header_or(&self, key: &str, default: &str) -> String {

@@ -6,6 +6,8 @@ use std::{fmt::Display, io::Write};
 
 use crate::HttpVersion;
 
+const DEFAULT_HTTP_VERSION: HttpVersion = HttpVersion::V1_1;
+
 /// Response struct.
 /// Contains the response data and converts it to text if needed.
 #[derive(Debug, Clone)]
@@ -74,7 +76,7 @@ impl Display for Response {
 ///
 /// Usage:
 /// ```
-/// use snowboard::response;
+/// use snowboard::{response, HttpVersion};
 ///
 /// // Response with no headers and no body.
 /// let response = response!(bad_request);
@@ -83,23 +85,27 @@ impl Display for Response {
 /// // Note that $body requires to be convertible to a String.
 /// let response =  response!(internal_server_error, "oopsies");
 ///
-/// // Response with body AND headers.
+/// // Response with body, headers and custom HTTP version.
 /// let body = "everything's fine!";
 /// let headers = vec![("a".into(), "b".into())];
-/// let response = response!(ok, body, headers);
+/// let response = response!(ok, body, headers, HttpVersion::V1_0);
 /// ```
 #[macro_export]
 macro_rules! response {
     ($type:ident) => {
-        snowboard::Response::$type(None, None)
+        snowboard::Response::$type(None, None, None)
     };
 
     ($type:ident,$body:expr) => {
-        snowboard::Response::$type(Some($body.into()), None)
+        snowboard::Response::$type(Some($body.into()), None, None)
     };
 
     ($type:ident,$body:expr,$headers:expr) => {
-        snowboard::Response::$type(Some($body.into()), Some($headers))
+        snowboard::Response::$type(Some($body.into()), Some($headers), None)
+    };
+
+    ($type:ident,$body:expr,$headers:expr,$http_version:expr) => {
+        snowboard::Response::$type(Some($body.into()), Some($headers), Some($http_version))
     };
 }
 
@@ -109,20 +115,16 @@ macro_rules! create_response_types {
         impl Response {
         $(
             /// Create a response with the given body and headers.
-            pub fn $name(body: Option<String>, headers: Option<Vec<(String, String)>>) -> Self {
+            pub fn $name(body: Option<String>, headers: Option<Vec<(String, String)>>, http_version: Option<HttpVersion>) -> Self {
                 let mut headers = headers.unwrap_or_default();
 
-                if !headers.iter().any(|(k, _)| k == "Content-Type") {
-                    headers.push(("Content-Type".into(), "text/html".into()));
+                if let Some(b) = &body  {
+                    if !headers.iter().any(|(k, _)| k == "Content-Length") {
+                        headers.push(("Content-Length".into(), b.len().to_string()));
+                    }
                 }
 
-                Self {
-                    status: $code,
-                    status_text: $text.into(),
-                    body: body.unwrap_or_default(),
-                    headers,
-                    ..Response::default()
-                }
+                Self::new(http_version.unwrap_or(DEFAULT_HTTP_VERSION), $code, $text.into(), body.unwrap_or_default(), headers)
             }
         )*
         }
