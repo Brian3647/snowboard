@@ -13,15 +13,15 @@ use std::{
 };
 
 /// The size of the buffer used to read incoming requests.
-/// It's set to 4KiB  by default.
+/// It's set to 4KiB by default.
 pub const DEFAULT_BUFFER_SIZE: usize = 1024 * 4;
 
 /// A type alias for any handler function.
-pub type Handler = fn(request: Request) -> Response;
+pub type Handler = fn(request: Request) -> Response<'static>;
 
 /// Middleware function. Returns a tuple of the modified request and an optional response.
-/// If the response is not `None`, the request will be ignored and the response will be sent.
-pub type Middleware = fn(request: Request) -> (Request, Option<Response>);
+/// If the response is not `None`, the request will be ignored, and the response will be sent.
+pub type Middleware = fn(request: Request) -> (Request, Option<Response<'static>>);
 
 /// Simple server struct
 pub struct Server {
@@ -38,7 +38,7 @@ impl Server {
     ///
     /// # Example
     /// See the `basic` example in `examples/basic`.
-    pub fn new<T: Into<String>>(addr: T) -> Self {
+    pub fn new(addr: &str) -> Self {
         Self {
             addr: addr.into(),
             on_request: None,
@@ -120,33 +120,27 @@ impl Server {
         println!("Listening on {}", self.addr);
 
         let listener = TcpListener::bind(&self.addr).unwrap();
+        while let Ok(req) = listener.accept() {
+            let middleware = self.middleware.clone();
+            let handler = self.on_request;
+            let buffer_size = self.buffer_size;
 
-        loop {
-            match listener.accept() {
-                Ok(req) => self.spawn_handler(req),
-                Err(e) => println!("Failed to establish a connection: {}", e),
-            }
+            thread::spawn(move || {
+                handle_request(req, handler, middleware, buffer_size);
+            });
         }
-    }
 
-    fn spawn_handler(&self, listener: (TcpStream, SocketAddr)) {
-        // Clone the middleware and handler functions so they can be moved to a thread.
-
-        let middleware = self.middleware.clone();
-        let handler = self.on_request;
-        let buffer_size = self.buffer_size;
-
-        thread::spawn(move || handle_request(listener, handler, middleware, buffer_size));
+        unreachable!()
     }
 }
 
 fn handle_request(
-    listener: (TcpStream, SocketAddr),
+    stream: (TcpStream, SocketAddr),
     handler: Option<Handler>,
     middleware: Vec<Middleware>,
     buffer_size: usize,
 ) {
-    let (mut stream, ip) = listener;
+    let (mut stream, ip) = stream;
 
     let mut buffer = vec![0; buffer_size];
     let read_result = stream.read(&mut buffer);
@@ -156,7 +150,6 @@ fn handle_request(
             "Failed to read from connection: {}",
             read_result.err().unwrap()
         );
-
         return;
     }
 
@@ -168,13 +161,11 @@ fn handle_request(
         return;
     }
 
-    let text = String::from_utf8_lossy(&buffer)
-        .replace('\0', "")
-        .to_string();
+    let text = String::from_utf8_lossy(&buffer).replace('\0', "");
 
     let mut request = Request::new(text, ip);
 
-    for middlewarefn in middleware {
+    for middlewarefn in &middleware {
         let (req, res) = middlewarefn(request.clone());
 
         if let Some(response) = res {

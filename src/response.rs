@@ -11,21 +11,21 @@ const DEFAULT_HTTP_VERSION: HttpVersion = HttpVersion::V1_1;
 /// Response struct.
 /// Contains the response data and converts it to text if needed.
 #[derive(Debug, Clone)]
-pub struct Response {
+pub struct Response<'a> {
     pub version: HttpVersion,
     pub status: u16,
-    pub status_text: String,
-    pub body: String,
-    pub headers: Vec<(String, String)>,
+    pub status_text: &'a str,
+    pub body: &'a str,
+    pub headers: Vec<(&'a str, &'a str)>,
 }
 
-impl Response {
+impl<'a> Response<'a> {
     pub fn new(
         version: HttpVersion,
         status: u16,
-        status_text: String,
-        body: String,
-        headers: Vec<(String, String)>,
+        status_text: &'a str,
+        body: &'a str,
+        headers: Vec<(&'a str, &'a str)>,
     ) -> Self {
         Self {
             version,
@@ -45,19 +45,19 @@ impl Response {
     }
 }
 
-impl Default for Response {
+impl<'a> Default for Response<'a> {
     fn default() -> Self {
         Self {
             version: HttpVersion::V1_1,
             status: 200,
-            status_text: "OK".into(),
-            body: String::new(),
+            status_text: "OK",
+            body: "",
             headers: vec![],
         }
     }
 }
 
-impl Display for Response {
+impl<'a> Display for Response<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut text = format!("{} {} {}\r\n", self.version, self.status, self.status_text);
 
@@ -112,11 +112,11 @@ macro_rules! response {
 // Macro rule used to create response types during compile time.
 macro_rules! create_response_types {
     ($($name:ident, $code:expr, $text:expr);*) => {
-        impl Response {
+        impl<'a> Response<'a> {
         $(
             #[inline(always)]
-            pub fn $name(body: Option<String>, headers: Option<Vec<(String, String)>>, http_version: Option<HttpVersion>) -> Self {
-                Self::new(http_version.unwrap_or(DEFAULT_HTTP_VERSION), $code, String::from($text), body.unwrap_or_default(), headers.unwrap_or_default())
+            pub fn $name(body: Option<&'a str>, headers: Option<Vec<(&'a str, &'a str)>>, http_version: Option<HttpVersion>) -> Self {
+                Self::new(http_version.unwrap_or(DEFAULT_HTTP_VERSION), $code, $text, body.unwrap_or_default(), headers.unwrap_or_default())
             }
         )*
         }

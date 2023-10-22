@@ -22,7 +22,7 @@ impl Request {
         let mut parts = first_line.split_whitespace();
 
         let method = Method::from(parts.next().unwrap().to_string());
-        let url = parts.next().unwrap().to_string();
+        let url = parts.next().unwrap().into();
 
         let mut headers = HashMap::new();
         let mut in_body = false;
@@ -57,8 +57,8 @@ impl Request {
         self.headers.get(key).map(|s| s.as_str())
     }
 
-    pub fn get_header_or(&self, key: &str, default: &str) -> String {
-        self.get_header(key).unwrap_or(default).to_string()
+    pub fn get_header_or(&self, key: &str, default: &'static str) -> &str {
+        self.get_header(key).unwrap_or(default)
     }
 
     pub fn set_header<T, K>(&mut self, key: T, value: K)
