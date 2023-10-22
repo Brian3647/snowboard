@@ -69,12 +69,14 @@ fn main() {
 }
 ```
 
+More info can be found at [`Server::add_middleware`](./src/lib.rs) in `lib.rs`.
+
 ### **Passing data**
 
 You can create an original data variable and get its reference on every middleware function/at the handler. You can use anything that implements `Clone` as data:
 
 ```rust
-use snowboard::{response, Method, Server};
+use snowboard::{response, Server};
 
 #[derive(Clone)]
 struct ServerData {
@@ -89,8 +91,6 @@ fn main() {
     Server::new("localhost:8080", data)
         .on_request(|request, my_data| {
             println!("{:?}", request);
-            assert_eq!(request.method, Method::GET);
-            assert_eq!(request.get_header("X-Server"), Some("Snowboard"));
 
             // Access the data
             response!(ok, my_data.hello)
@@ -99,7 +99,9 @@ fn main() {
 }
 ```
 
-More info can be found at [`Server::add_middleware`](./src/lib.rs) in `lib.rs`.
+## **On load function**
+
+_This isn't relevant enough to bloat the readme, but you can find it in lib.ts at [`Server::on_load`]_
 
 ## **Why should I use this?**
 

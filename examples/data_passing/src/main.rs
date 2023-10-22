@@ -1,4 +1,4 @@
-use snowboard::{response, Method, Server};
+use snowboard::{response, Server};
 
 #[derive(Clone)]
 struct ServerData {
@@ -13,8 +13,6 @@ fn main() {
     Server::new("localhost:8080", data)
         .on_request(|request, my_data| {
             println!("{:?}", request);
-            assert_eq!(request.method, Method::GET);
-            assert_eq!(request.get_header("X-Server"), Some("Snowboard"));
 
             // Access the data
             response!(ok, my_data.hello)

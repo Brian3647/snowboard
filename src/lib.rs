@@ -69,8 +69,8 @@ impl<T: Clone + Send + 'static> Server<T> {
     /// ```
     /// use snowboard::Server;
     ///
-    /// let server = Server::new("localhost:8080")
-    ///     .on_request(|request| {
+    /// let server = Server::new("localhost:8080", "")
+    ///     .on_request(|request, _| {
     ///         println!("{:?}", request);
     ///
     ///         snowboard::response!(ok, "Hello, world!")
@@ -100,9 +100,9 @@ impl<T: Clone + Send + 'static> Server<T> {
     /// ```
     /// use snowboard::Server;
     ///
-    /// let mut server = Server::new("localhost:8080");
+    /// let mut server = Server::new("localhost:8080", "");
     ///
-    /// server.add_middleware(|mut request| {
+    /// server.add_middleware(|mut request, _| {
     ///    request.set_header("X-Server", "Snowboard");
     ///
     ///    // Request, Response
@@ -114,9 +114,9 @@ impl<T: Clone + Send + 'static> Server<T> {
     /// ```
     /// use snowboard::Server;
     ///
-    /// let mut server = Server::new("localhost:8080");
+    /// let mut server = Server::new("localhost:8080", "");
     ///
-    /// server.add_middleware(|request| {
+    /// server.add_middleware(|request, _| {
     ///    // Request, Response
     ///   (request, Some(snowboard::response!(ok, "Hello, world!")))
     /// });
@@ -132,6 +132,8 @@ impl<T: Clone + Send + 'static> Server<T> {
 
         if let Some(on_load) = self.on_load {
             on_load(&self.data);
+        } else {
+            println!("[snowboard] Server started on {}", self.addr);
         }
 
         while let Ok(req) = listener.accept() {
