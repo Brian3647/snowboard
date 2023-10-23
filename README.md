@@ -110,9 +110,8 @@ _This isn't relevant enough to bloat the readme, but you can find it in lib.ts a
 ## **Why should I use this?**
 
 Snowboard is designed and created for people who like coding their own things from little to nothing, like me.
-This library does not implement what most server libraries have,
-but rather offers a plain request-response system that can be heavily configured or changed based on user preference.
-It comes with the essential tools for writing whatever you want to.
+This library does not implement what most server libraries have, like an advanced routing system,
+but rather offers a set of essential tools to create a powerful web server.
 
 ## **Examples**
 
