@@ -99,6 +99,10 @@ fn main() {
 }
 ```
 
+## **Routing**
+
+Routing can be handled easily using the `Url` struct as seen in [`examples/routing`](./examples/routing/).
+
 ## **On load function**
 
 _This isn't relevant enough to bloat the readme, but you can find it in lib.ts at [`Server::on_load`]_

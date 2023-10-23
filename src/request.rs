@@ -1,13 +1,15 @@
 use std::collections::HashMap;
 use std::net::SocketAddr;
 
-use crate::Method;
+use crate::{Method, Url};
 
 /// A server request.
 /// Parses the raw request string into a more usable format.
 #[derive(Debug, Clone)]
 pub struct Request {
     pub ip: SocketAddr,
+    /// Raw URL string.
+    /// Use `Request::url()` to get a parsed version of the URL
     pub url: String,
     pub method: Method,
     pub body: String,
@@ -67,5 +69,10 @@ impl Request {
         K: Into<String>,
     {
         self.headers.insert(key.into(), value.into());
+    }
+
+    /// Get a parsed version of the URL
+    pub fn url(&self) -> Url {
+        self.url.as_str().into()
     }
 }

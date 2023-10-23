@@ -1,10 +1,12 @@
 mod request;
 mod response;
+mod url;
 mod util;
 
 pub use request::Request;
 pub use response::Response;
-pub use util::*;
+pub use url::Url;
+pub use util::{HttpVersion, Method};
 
 use std::{
     io::Read,
@@ -133,7 +135,7 @@ impl<T: Clone + Send + 'static> Server<T> {
         if let Some(on_load) = self.on_load {
             on_load(&self.data);
         } else {
-            println!("[snowboard] Server started on {}", self.addr);
+            println!("[snowboar] Server on @ http://{}", self.addr);
         }
 
         while let Ok(req) = listener.accept() {
@@ -168,6 +170,7 @@ fn handle_request<T>(
             "Failed to read from connection: {}",
             read_result.err().unwrap()
         );
+
         return;
     }
 
