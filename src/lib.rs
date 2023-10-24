@@ -11,3 +11,5 @@ pub use response::Response;
 pub use server::{Handler, Middleware, Server};
 pub use url::Url;
 pub use util::{HttpVersion, Method};
+
+pub use std::net::TcpStream;

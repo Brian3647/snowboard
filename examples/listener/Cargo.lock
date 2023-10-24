@@ -3,7 +3,7 @@
 version = 3
 
 [[package]]
-name = "ping"
+name = "listener"
 version = "0.1.0"
 dependencies = [
  "snowboard",

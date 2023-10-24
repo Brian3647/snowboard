@@ -24,6 +24,7 @@ use snowboard::{Server, response};
 
 fn main() {
     let data = "Hello, world!";
+
     Server::new("localhost:8080".into(), data)
         .on_request(|request, my_data| {
             println!("{:?}", request);
@@ -96,6 +97,30 @@ fn main() {
             response!(ok, my_data.hello)
         })
         .run();
+}
+```
+
+## **Simple listener struct**
+
+If you want to make it even more your own, or use single threads, you can simply use the `Listener` class. This is faster and way better if you do not need data passing. The next code is pretty much what the Server class does, but without data passing, which is sometimes not needed at all:
+
+```rust
+use std::thread;
+
+use snowboard::{response, Listener, Request, Response};
+
+fn index(request: Request) -> Response<'static> {
+    println!("Request: {:?}", request);
+
+    response!(ok, "Hello, world!")
+}
+
+fn main() {
+    let server = Listener::new("localhost:8080");
+
+    for (mut stream, request) in server {
+        thread::spawn(move || index(request).send_to(&mut stream));
+    }
 }
 ```
 
