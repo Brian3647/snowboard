@@ -100,7 +100,7 @@ fn main() {
 }
 ```
 
-## **Simple listener struct**
+### **Simple listener struct**
 
 If you want to make it even more your own, or use single threads, you can simply use the `Listener` class. This is faster and way better if you do not need data passing. The next code is pretty much what the Server class does, but without data passing, which is sometimes not needed at all:
 
