@@ -3,5 +3,12 @@
 version = 3
 
 [[package]]
+name = "single-thread"
+version = "0.1.0"
+dependencies = [
+ "snowboard",
+]
+
+[[package]]
 name = "snowboard"
 version = "0.3.2"

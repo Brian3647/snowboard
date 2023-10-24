@@ -36,7 +36,7 @@ impl<'a> Response<'a> {
         }
     }
 
-    pub fn send(&self, stream: &mut std::net::TcpStream) {
+    pub fn send_to(&self, stream: &mut std::net::TcpStream) {
         let text = self.to_string();
         let bytes = text.as_bytes();
 
