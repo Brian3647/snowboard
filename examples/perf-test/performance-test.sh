@@ -7,6 +7,9 @@
 echo "Doing perfomance test on multi-thread server..."
 
 EXECUTABLE=./target/release/perf-test
+PREV_PWD="$(pwd)"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd $SCRIPT_DIR
 
 # Check if the script is in the same directory as the program
 if [ ! -f "src/main.rs" ]; then
@@ -31,3 +34,4 @@ time for i in {1..10000}; do curl -s http://localhost:8080/ > /dev/null; done
 
 # Kill the program
 kill $(lsof -t -i:8080)
+cd $PREV_PWD
