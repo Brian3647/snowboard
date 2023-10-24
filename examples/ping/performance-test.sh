@@ -4,6 +4,8 @@
 # Then, runs the program with cargo --release, and pipes the output to a file.
 # In parallel of that, it sends a bunch of curl requests to the server, and times them.
 
+echo "Doing perfomance test on multi-thread server..."
+
 EXECUTABLE=./target/release/ping
 
 # Check if the script is in the same directory as the program
