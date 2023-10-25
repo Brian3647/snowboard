@@ -1,6 +1,7 @@
 use std::{
     io::{Error, ErrorKind, Read, Result},
     net::{TcpListener, TcpStream},
+    thread,
 };
 
 use crate::{server::DEFAULT_BUFFER_SIZE, Request, Response};
@@ -43,6 +44,35 @@ impl Listener {
         let text = String::from_utf8_lossy(&buffer).replace('\0', "");
 
         Ok((stream, Request::new(text, ip)))
+    }
+
+    /// Run a multi-thread listener from a handler function.
+    /// The handler function will be called when a request is received.
+    /// The handler function must return a `Response` instance. Meant for servers
+    /// where passing data to the handler is not needed.
+    ///
+    /// # Example
+    /// ```
+    /// use snowboard::{response, Listener};
+    ///
+    /// Listener::run_from_handler("localhost:8080", |_| response!(ok));
+    /// ```
+    pub fn run_from_handler(
+        addr: impl Into<String>,
+        handler: impl Fn(Request) -> Response<'static> + Send + 'static + Clone,
+    ) -> ! {
+        let listener = Self::new(addr);
+
+        for (mut stream, request) in listener {
+            let handler = handler.clone();
+
+            thread::spawn(move || {
+                let response = handler(request);
+                response.send_to(&mut stream);
+            });
+        }
+
+        unreachable!()
     }
 }
 
