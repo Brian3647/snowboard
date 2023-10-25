@@ -1,7 +1,7 @@
-use snowboard::{response, Listener};
+use snowboard::{response, Server};
 
 fn main() {
-    let server = Listener::new("localhost:8080");
+    let server = Server::new("localhost:8080");
 
     for (mut stream, request) in server {
         println!("{:?}", request);

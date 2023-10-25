@@ -12,13 +12,9 @@ impl<'a> Url<'a> {
         }
     }
 
-    pub fn at(&self, i: usize) -> &'a str {
-        self.path[i]
-    }
-
     /// Returns the `i` element of the path.
     /// If the element does not exist, returns `None`.
-    pub fn safe_at(&self, i: usize) -> Option<&'a str> {
+    pub fn at(&self, i: usize) -> Option<&'a str> {
         self.path.get(i).copied()
     }
 

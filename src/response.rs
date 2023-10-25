@@ -93,19 +93,19 @@ impl<'a> Display for Response<'a> {
 #[macro_export]
 macro_rules! response {
     ($type:ident) => {
-        ::snowboard::Response::$type(None, None, None)
+        $crate::Response::$type(None, None, None)
     };
 
     ($type:ident,$body:expr) => {
-        ::snowboard::Response::$type(Some(format!("{}", $body)), None, None)
+        $crate::Response::$type(Some(format!("{}", $body)), None, None)
     };
 
     ($type:ident,$body:expr,$headers:expr) => {
-        ::snowboard::Response::$type(Some(format!("{}", $body)), Some($headers), None)
+        $crate::Response::$type(Some(format!("{}", $body)), Some($headers), None)
     };
 
     ($type:ident,$body:expr,$headers:expr,$http_version:expr) => {
-        ::snowboard::Response::$type(
+        $crate::Response::$type(
             Some(format!("{}", $body)),
             Some($headers),
             Some($http_version),

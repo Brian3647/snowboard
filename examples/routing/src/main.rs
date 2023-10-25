@@ -1,13 +1,8 @@
 use snowboard::{response, Request, Response, Server};
 
-#[derive(Clone)]
-struct ServerData {
-    // ...
-}
-
-fn router(req: Request, _: &ServerData) -> Response<'static> {
+fn router(req: Request) -> Response<'static> {
     // /{x}
-    match req.url().safe_at(0) {
+    match req.parse_url().at(0) {
         Some("ping") => response!(ok, "Pong!"),
         Some("api") => response!(not_implemented, '👀'),
         None => response!(ok, "Hello, world!"),
@@ -16,7 +11,5 @@ fn router(req: Request, _: &ServerData) -> Response<'static> {
 }
 
 fn main() {
-    Server::new("localhost:8080", ServerData {})
-        .on_request(router)
-        .run();
+    Server::new("localhost:8080").run(router);
 }

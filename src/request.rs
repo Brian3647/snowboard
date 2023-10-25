@@ -72,7 +72,7 @@ impl Request {
     }
 
     /// Get a parsed version of the URL
-    pub fn url(&self) -> Url {
+    pub fn parse_url(&self) -> Url {
         self.url.as_str().into()
     }
 }

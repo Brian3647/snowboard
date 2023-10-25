@@ -1,10 +1,5 @@
-use std::thread;
+use snowboard::{response, Server};
 
-use snowboard::{response, Listener};
 fn main() {
-    let server = Listener::new("localhost:8080");
-
-    for (mut stream, _) in server {
-        thread::spawn(move || response!(ok).send_to(&mut stream));
-    }
+    Server::new("localhost:8080").run(|_| response!(ok));
 }
