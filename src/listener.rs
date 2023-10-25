@@ -13,7 +13,7 @@ pub struct Listener {
 }
 
 impl Listener {
-    pub fn new<'a>(addr: impl Into<&'a str>) -> Self {
+    pub fn new(addr: impl Into<String>) -> Self {
         let addr = addr.into();
         Self {
             tcp_listener: TcpListener::bind(addr).unwrap(),
@@ -32,7 +32,7 @@ impl Listener {
 
         let (mut stream, ip) = stream;
 
-        let mut buffer = vec![0; self.buffer_size];
+        let mut buffer: Vec<u8> = vec![0; self.buffer_size];
         let payload_size = stream.read(&mut buffer)?;
 
         if payload_size > self.buffer_size {

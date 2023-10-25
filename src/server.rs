@@ -21,7 +21,7 @@ pub struct Server<T: Clone + Send + 'static> {
     middleware: Vec<Middleware<T>>,
     listener: Listener,
     data: T,
-    addr: &'static str,
+    addr: String,
 }
 
 impl<T: Clone + Send + 'static> Server<T> {
@@ -31,9 +31,11 @@ impl<T: Clone + Send + 'static> Server<T> {
     ///
     /// # Example
     /// See the `basic` example in `examples/basic`.
-    pub fn new(addr: &'static str, data: T) -> Self {
+    pub fn new(addr: impl Into<String>, data: T) -> Self {
+        let addr = addr.into();
+
         Self {
-            listener: Listener::new(addr),
+            listener: Listener::new(&addr),
             on_request: None,
             middleware: vec![],
             data,
