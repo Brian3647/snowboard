@@ -18,7 +18,11 @@ pub struct Server {
     buffer_size: usize,
 }
 
+/// Simple rust TCP HTTP server.
 impl Server {
+    /// Create a new server instance.
+    /// The server will listen on the given address.
+    /// The address must be in the format of `ip:port`.
     pub fn new(addr: impl Into<String>) -> Self {
         let addr = addr.into();
 
@@ -28,12 +32,38 @@ impl Server {
         }
     }
 
+    /// Set the buffer size used to read incoming requests.
+    /// The default buffer size is 8KiB.
+    /// The buffer size must be greater than 0.
     pub fn set_buffer_size(&mut self, size: usize) {
         assert!(size > 0, "Buffer size must be greater than 0");
 
         self.buffer_size = size;
     }
 
+    /// Try to accept a new incoming request.
+    /// Returns an error if the request could not be read.
+    /// The request will be read into a buffer and parsed into a `Request` instance.
+    /// The buffer size can be changed with `Server::set_buffer_size()`.
+    /// The default buffer size is 8KiB.
+    /// The buffer size must be greater than 0.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use snowboard::{Request, Response, Server};
+    ///
+    /// let server = Server::new("localhost:8080");
+    ///
+    /// loop {
+    ///    match server.try_accept() {
+    ///       Ok((stream, request)) => {
+    ///         // Handle request
+    ///      },
+    ///      Err(_) => {
+    ///        // Handle error
+    ///      }
+    /// }
+    /// ```
     pub fn try_accept(&self) -> Result<(TcpStream, Request)> {
         let stream = self.tcp_listener.accept()?;
 
@@ -58,10 +88,10 @@ impl Server {
     /// where passing data to the handler is not needed.
     ///
     /// # Example
-    /// ```
-    /// use snowboard::{response, Listener};
+    /// ```no_run
+    /// use snowboard::{response, Server};
     ///
-    /// Listener::run_from_handler("localhost:8080", |_| response!(ok));
+    /// Server::new("localhost:8080").run(|_| response!(ok));
     /// ```
     pub fn run(self, handler: impl Fn(Request) -> Response<'static> + Send + 'static + Clone) -> ! {
         for (mut stream, request) in self {
