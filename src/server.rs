@@ -62,6 +62,7 @@ impl Server {
     ///      Err(_) => {
     ///        // Handle error
     ///      }
+    ///   }
     /// }
     /// ```
     pub fn try_accept(&self) -> Result<(TcpStream, Request)> {
