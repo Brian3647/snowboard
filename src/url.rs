@@ -1,14 +1,22 @@
+use std::collections::HashMap;
+
 #[derive(Debug, Clone)]
 pub struct Url<'a> {
     pub path: Vec<&'a str>,
-    pub search_params: Vec<(&'a str, &'a str)>,
+    pub search_params: HashMap<&'a str, &'a str>,
+    pub fragment: Option<&'a str>,
 }
 
 impl<'a> Url<'a> {
-    pub fn new(path: Vec<&'a str>, search_params: Vec<(&'a str, &'a str)>) -> Self {
+    pub fn new(
+        path: Vec<&'a str>,
+        search_params: HashMap<&'a str, &'a str>,
+        fragment: Option<&'a str>,
+    ) -> Self {
         Self {
             path,
             search_params,
+            fragment,
         }
     }
 
@@ -19,50 +27,29 @@ impl<'a> Url<'a> {
     }
 
     pub fn search_param(&self, key: &'a str) -> Option<&'a str> {
-        for (k, v) in &self.search_params {
-            if k == &key {
-                return Some(v);
-            }
-        }
-
-        None
+        self.search_params.get(key).copied()
     }
 }
 
 impl<'a> From<&'a str> for Url<'a> {
     fn from(value: &'a str) -> Self {
-        let mut parts = value.split('?');
-        let mut path = parts
-            .next()
-            .unwrap_or_default()
-            .split('/')
-            .skip(1)
-            .collect::<Vec<&str>>();
+        let parts: Vec<&'a str> = value.split('?').collect();
+        let path: Vec<&'a str> = parts[0].split('/').collect();
+        let mut search_params = HashMap::new();
+        let mut fragment = None;
 
-        // When requesting /, path becomes vec![""], and this filters that issue.
-        if path == vec![""] {
-            path = vec![];
+        if parts.len() > 1 {
+            let query: Vec<&'a str> = parts[1].split('#').collect();
+            for s in query[0].split('&') {
+                let pair: Vec<&'a str> = s.split('=').collect();
+                search_params.insert(pair[0], *pair.get(1).unwrap_or(&""));
+            }
+
+            if query.len() > 1 {
+                fragment = Some(query[1]);
+            }
         }
 
-        if let Some(sp) = parts.next() {
-            let search_params = sp
-                .split('&')
-                .filter_map(|param| {
-                    let mut parts = param.split('=');
-                    let key = parts.next().unwrap();
-                    let value = parts.next().unwrap_or_default();
-
-                    if key.is_empty() || value.is_empty() {
-                        return None;
-                    }
-
-                    Some((key, value))
-                })
-                .collect::<Vec<(&str, &str)>>();
-
-            return Self::new(path, search_params);
-        }
-
-        Self::new(path, vec![])
+        Self::new(path, search_params, fragment)
     }
 }
