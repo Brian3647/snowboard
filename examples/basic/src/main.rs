@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use snowboard::{response, Method, Server};
 
 fn main() {
@@ -12,6 +14,9 @@ fn main() {
 
         println!("{:?}", req);
 
-        response!(ok, data, vec![("X-MyHeader", "hello!")])
+        let mut headers = HashMap::new();
+        headers.insert("X-Hello", "World");
+
+        response!(ok, data, headers)
     });
 }

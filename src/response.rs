@@ -3,6 +3,7 @@
 // (eg. ok, not_found, etc.)
 
 use std::{
+    collections::HashMap,
     fmt::Display,
     io::{self, Write},
 };
@@ -19,7 +20,7 @@ pub struct Response {
     pub status: u16,
     pub status_text: &'static str,
     pub body: String,
-    pub headers: Vec<(&'static str, &'static str)>,
+    pub headers: HashMap<&'static str, &'static str>,
 }
 
 impl Response {
@@ -28,7 +29,7 @@ impl Response {
         status: u16,
         status_text: &'static str,
         body: String,
-        headers: Vec<(&'static str, &'static str)>,
+        headers: HashMap<&'static str, &'static str>,
     ) -> Self {
         Self {
             version,
@@ -71,7 +72,7 @@ impl Default for Response {
             status: 200,
             status_text: "OK",
             body: String::new(),
-            headers: vec![],
+            headers: HashMap::new(),
         }
     }
 }
@@ -91,7 +92,8 @@ impl Default for Response {
 ///
 /// // Response with body, headers and custom HTTP version.
 /// let body = "everything's fine!";
-/// let headers = vec![("a", "b")];
+/// let mut headers = HashMap::new();
+/// headers.insert("X-Hello", "World!");
 /// let response = response!(ok, body, headers, HttpVersion::V1_0);
 /// ```
 #[macro_export]
@@ -117,7 +119,7 @@ macro_rules! response {
     };
 }
 
-type OptHeaders = Option<Vec<(&'static str, &'static str)>>;
+type OptHeaders = Option<HashMap<&'static str, &'static str>>;
 
 // Macro rule used to create response types during compile time.
 macro_rules! create_response_types {
@@ -138,7 +140,7 @@ create_response_types!(
     switching_protocols, 101, "Switching Protocols";
     processing, 102, "Processing";
     early_hints, 103, "Early Hints";
-    ok, 200, "OK";
+    ok, 200, "Ok";
     created, 201, "Created";
     accepted, 202, "Accepted";
     non_authoritative_information, 203, "Non-Authoritative Information";
