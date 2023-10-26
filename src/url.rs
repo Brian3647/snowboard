@@ -47,12 +47,16 @@ impl<'a> From<&'a str> for Url<'a> {
         if let Some(sp) = parts.next() {
             let search_params = sp
                 .split('&')
-                .map(|param| {
+                .filter_map(|param| {
                     let mut parts = param.split('=');
                     let key = parts.next().unwrap();
                     let value = parts.next().unwrap_or_default();
 
-                    (key, value)
+                    if key.is_empty() || value.is_empty() {
+                        return None;
+                    }
+
+                    Some((key, value))
                 })
                 .collect::<Vec<(&str, &str)>>();
 

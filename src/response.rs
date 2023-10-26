@@ -2,7 +2,10 @@
 // This file includes the functions for each response type.
 // (eg. ok, not_found, etc.)
 
-use std::{fmt::Display, io::Write};
+use std::{
+    fmt::Display,
+    io::{self, Write},
+};
 
 use crate::HttpVersion;
 
@@ -36,12 +39,13 @@ impl Response {
         }
     }
 
-    pub fn send_to(&self, stream: &mut std::net::TcpStream) {
+    pub fn send_to(&self, stream: &mut std::net::TcpStream) -> Result<(), io::Error> {
         let text = self.to_string();
         let bytes = text.as_bytes();
 
-        stream.write_all(bytes).unwrap();
-        stream.flush().unwrap();
+        stream.write_all(bytes)?;
+        stream.flush()?;
+        Ok(())
     }
 }
 

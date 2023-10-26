@@ -8,6 +8,6 @@ fn main() {
 
         let response = response!(ok, "Hello, world!");
 
-        response.send_to(&mut stream);
+        response.send_to(&mut stream).unwrap();
     }
 }

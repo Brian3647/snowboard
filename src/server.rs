@@ -79,7 +79,7 @@ impl Server {
         let payload_size = stream.read(&mut buffer)?;
 
         if payload_size > self.buffer_size {
-            crate::response!(payload_too_large).send_to(&mut stream);
+            crate::response!(payload_too_large).send_to(&mut stream)?;
             return Err(Error::new(ErrorKind::InvalidInput, "Payload too large"));
         }
 
@@ -87,7 +87,7 @@ impl Server {
         let req = match Request::new(text, ip) {
             Some(req) => req,
             None => {
-                crate::response!(bad_request).send_to(&mut stream);
+                crate::response!(bad_request).send_to(&mut stream)?;
                 return Err(Error::new(ErrorKind::InvalidInput, "Invalid request"));
             }
         };
@@ -113,7 +113,9 @@ impl Server {
 
             thread::spawn(move || {
                 let response = handler(request);
-                response.send_to(&mut stream);
+                if let Err(e) = response.send_to(&mut stream) {
+                    eprintln!("Error writing response: {:?}", e);
+                };
             });
         }
 
@@ -149,7 +151,9 @@ impl Server {
             let handler = handler.clone();
 
             task::spawn(async move {
-                handler(request).await.send_to(&mut stream);
+                if let Err(e) = handler(request).await.send_to(&mut stream) {
+                    eprintln!("Error writing response: {:?}", e);
+                };
             });
         }
 
