@@ -79,13 +79,20 @@ impl Server {
         let payload_size = stream.read(&mut buffer)?;
 
         if payload_size > self.buffer_size {
-            Response::payload_too_large(None, None, None).send_to(&mut stream);
+            crate::response!(payload_too_large).send_to(&mut stream);
             return Err(Error::new(ErrorKind::InvalidInput, "Payload too large"));
         }
 
         let text = String::from_utf8_lossy(&buffer).replace('\0', "");
+        let req = match Request::new(text, ip) {
+            Some(req) => req,
+            None => {
+                crate::response!(bad_request).send_to(&mut stream);
+                return Err(Error::new(ErrorKind::InvalidInput, "Invalid request"));
+            }
+        };
 
-        Ok((stream, Request::new(text, ip)))
+        Ok((stream, req))
     }
 
     /// Run a multi-thread listener from a handler function.

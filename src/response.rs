@@ -62,7 +62,7 @@ impl Display for Response {
         let mut text = format!("{} {} {}\r\n", self.version, self.status, self.status_text);
 
         for (key, value) in &self.headers {
-            text += &format!("{}: {}\r\n", key, value);
+            text += &format!("{key}: {value}\r\n");
         }
 
         text += "\r\n";
@@ -97,19 +97,15 @@ macro_rules! response {
     };
 
     ($type:ident,$body:expr) => {
-        $crate::Response::$type(Some(format!("{}", $body)), None, None)
+        $crate::Response::$type(Some($body.to_string()), None, None)
     };
 
     ($type:ident,$body:expr,$headers:expr) => {
-        $crate::Response::$type(Some(format!("{}", $body)), Some($headers), None)
+        $crate::Response::$type(Some($body.to_string()), Some($headers), None)
     };
 
     ($type:ident,$body:expr,$headers:expr,$http_version:expr) => {
-        $crate::Response::$type(
-            Some(format!("{}", $body)),
-            Some($headers),
-            Some($http_version),
-        )
+        $crate::Response::$type(Some($body.to_string()), Some($headers), Some($http_version))
     };
 }
 

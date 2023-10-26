@@ -17,14 +17,14 @@ pub struct Request {
 }
 
 impl Request {
-    pub fn new(text: String, ip: SocketAddr) -> Self {
+    pub fn new(text: String, ip: SocketAddr) -> Option<Self> {
         let mut lines = text.lines();
 
-        let first_line = lines.next().unwrap();
+        let first_line = lines.next()?;
         let mut parts = first_line.split_whitespace();
 
-        let method = Method::from(parts.next().unwrap().to_string());
-        let url = parts.next().unwrap().into();
+        let method = Method::from(parts.next()?.to_string());
+        let url = parts.next()?.into();
 
         let mut headers = HashMap::new();
         let mut in_body = false;
@@ -40,19 +40,19 @@ impl Request {
             }
 
             let mut parts = line.splitn(2, ':');
-            let key = parts.next().unwrap().into();
-            let value = parts.next().unwrap().trim().into();
+            let key = parts.next()?.into();
+            let value = parts.next()?.trim().into();
 
             headers.insert(key, value);
         }
 
-        Self {
+        Some(Self {
             ip,
             url,
             method,
             body,
             headers,
-        }
+        })
     }
 
     pub fn get_header(&self, key: &str) -> Option<&str> {
