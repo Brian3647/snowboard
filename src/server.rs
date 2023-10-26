@@ -110,7 +110,7 @@ impl Server {
             });
         }
 
-        unreachable!()
+        unreachable!("Server::run() should never return")
     }
 
     /// Runs the server asynchronously.
