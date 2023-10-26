@@ -100,7 +100,7 @@ impl Server {
     /// Server::new("localhost:8080").run(|_| response!(ok));
     /// ```
     #[cfg(not(feature = "async"))]
-    pub fn run(self, handler: impl Fn(Request) -> Response<'static> + Send + 'static + Clone) -> ! {
+    pub fn run(self, handler: impl Fn(Request) -> Response + Send + 'static + Clone) -> ! {
         for (mut stream, request) in self {
             let handler = handler.clone();
 
