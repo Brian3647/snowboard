@@ -49,18 +49,6 @@ impl Response {
     }
 }
 
-impl Default for Response {
-    fn default() -> Self {
-        Self {
-            version: HttpVersion::V1_1,
-            status: 200,
-            status_text: "OK",
-            body: "".into(),
-            headers: vec![],
-        }
-    }
-}
-
 impl Display for Response {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut text = format!("{} {} {}\r\n", self.version, self.status, self.status_text);
@@ -73,6 +61,18 @@ impl Display for Response {
         text += &self.body;
 
         write!(f, "{}", text)
+    }
+}
+
+impl Default for Response {
+    fn default() -> Self {
+        Self {
+            version: HttpVersion::V1_1,
+            status: 200,
+            status_text: "OK",
+            body: String::new(),
+            headers: vec![],
+        }
     }
 }
 
@@ -96,6 +96,10 @@ impl Display for Response {
 /// ```
 #[macro_export]
 macro_rules! response {
+    (ok) => {
+        $crate::Response::default()
+    };
+
     ($type:ident) => {
         $crate::Response::$type(None, None, None)
     };
