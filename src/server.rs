@@ -1,6 +1,9 @@
 use crate::request::Request;
 use crate::response::Response;
 
+#[cfg(feature = "async")]
+use std::future::Future;
+
 /// The size of the buffer used to read incoming requests.
 /// It's set to 8KiB by default.
 pub const DEFAULT_BUFFER_SIZE: usize = 1024 * 8;
@@ -8,8 +11,10 @@ pub const DEFAULT_BUFFER_SIZE: usize = 1024 * 8;
 use std::{
     io::{Error, ErrorKind, Read, Result},
     net::{TcpListener, TcpStream},
-    thread,
 };
+
+#[cfg(not(feature = "async"))]
+use std::thread;
 
 /// Single threaded listener made for simpler servers.
 #[derive(Debug)]
@@ -94,6 +99,7 @@ impl Server {
     ///
     /// Server::new("localhost:8080").run(|_| response!(ok));
     /// ```
+    #[cfg(not(feature = "async"))]
     pub fn run(self, handler: impl Fn(Request) -> Response<'static> + Send + 'static + Clone) -> ! {
         for (mut stream, request) in self {
             let handler = handler.clone();
@@ -106,6 +112,42 @@ impl Server {
 
         unreachable!()
     }
+
+    /// Runs the server asynchronously.
+    ///
+    /// This function takes a handler function as an argument. The handler function is expected to be a
+    /// function that takes a `Request` and returns a `Future` that resolves to a `Response<'static>`.
+    ///
+    /// The handler function is cloned for each request, and each request is processed in a separate
+    /// async task. This means that multiple requests can be processed concurrently.
+    ///
+    /// This function is only available when the `async` feature is enabled.
+    /// # Examples
+    ///
+    /// # Example
+    /// ```no_run
+    /// use snowboard::{response, Server};
+    ///
+    /// Server::new("localhost:8080").run(async |_| response!(ok));
+    /// ```
+    #[cfg(feature = "async")]
+    pub fn run<H, F>(self, handler: H) -> !
+    where
+        H: Fn(Request) -> F + Clone + Send + 'static + Sync,
+        F: Future<Output = Response> + Send + 'static,
+    {
+        use async_std::task;
+
+        for (mut stream, request) in self {
+            let handler = handler.clone();
+
+            task::spawn(async move {
+                handler(request).await.send_to(&mut stream);
+            });
+        }
+
+        unreachable!("Server::run() should never return")
+    }
 }
 
 impl Iterator for Server {
@@ -114,7 +156,10 @@ impl Iterator for Server {
     fn next(&mut self) -> Option<Self::Item> {
         match self.try_accept() {
             Ok(req) => Some(req),
-            Err(_) => None,
+            Err(e) => {
+                eprintln!("Error: {:?}", e);
+                None
+            }
         }
     }
 }

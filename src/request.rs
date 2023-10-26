@@ -9,7 +9,7 @@ use crate::{Method, Url};
 pub struct Request {
     pub ip: SocketAddr,
     /// Raw URL string.
-    /// Use `Request::url()` to get a parsed version of the URL
+    /// Use `Request::parse_url()` to get a parsed version of the URL
     pub url: String,
     pub method: Method,
     pub body: String,

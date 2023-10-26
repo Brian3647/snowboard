@@ -11,3 +11,6 @@ pub use url::Url;
 pub use util::{HttpVersion, Method};
 
 pub use std::net::TcpStream;
+
+#[cfg(feature = "async")]
+pub use async_std;

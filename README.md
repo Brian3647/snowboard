@@ -4,7 +4,7 @@
 ![GitHub issues](https://img.shields.io/github/issues/Brian3647/snowboard)
 ![Build status](https://img.shields.io/github/actions/workflow/status/Brian3647/snowboard/rust.yml)
 
-A 0-dependency library for fast & simple TCP servers in rust
+An extremelly simple library for fast & simple TCP servers in rust
 
 \[[Request a feature/Report a bug](https://github.com/Brian3647/snowboard/issues)\]
 
@@ -35,6 +35,36 @@ fn main() {
 
 And that's it! You got yourself a working server on :8080. Examples can be found [here](./examples/).
 
+## **Async routes**
+
+You can use the `async` feature to change `Server::run()` so that it supports asynchronous handlers:
+
+```toml
+# Cargo.toml
+
+[dependencies]
+snowboard = { version = "*", features = ["async"] }
+```
+
+```rust
+// src/main.rs
+
+use snowboard::async_std::task;
+use snowboard::{response, Request, Response, Server};
+use std::time::Duration;
+
+async fn index(req: Request) -> Response<'static> {
+    println!("{:?}", req);
+    // Wait 1 second before sending the response
+    task::sleep(Duration::from_secs(1)).await;
+    response!(ok, "Async works!")
+}
+
+fn main() {
+    Server::new("localhost:8080").run(index);
+}
+```
+
 ## **Routing**
 
 Routing can be handled easily using the `Url` struct as seen in [`examples/routing`](./examples/routing/).
@@ -44,10 +74,6 @@ Routing can be handled easily using the `Url` struct as seen in [`examples/routi
 Snowboard is designed and created for people who like coding their own things from little to nothing, like me.
 This library does not implement what most server libraries have, like an advanced routing system,
 but rather offers a set of essential tools to create a powerful web server.
-
-## **Examples**
-
-Examples can be found [here](./examples/).
 
 ## **Contributing**
 

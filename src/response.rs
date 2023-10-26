@@ -11,21 +11,21 @@ const DEFAULT_HTTP_VERSION: HttpVersion = HttpVersion::V1_1;
 /// Response struct.
 /// Contains the response data and converts it to text if needed.
 #[derive(Debug, Clone)]
-pub struct Response<'a> {
+pub struct Response {
     pub version: HttpVersion,
     pub status: u16,
-    pub status_text: &'a str,
+    pub status_text: &'static str,
     pub body: String,
-    pub headers: Vec<(&'a str, &'a str)>,
+    pub headers: Vec<(&'static str, &'static str)>,
 }
 
-impl<'a> Response<'a> {
+impl Response {
     pub fn new(
         version: HttpVersion,
         status: u16,
-        status_text: &'a str,
+        status_text: &'static str,
         body: String,
-        headers: Vec<(&'a str, &'a str)>,
+        headers: Vec<(&'static str, &'static str)>,
     ) -> Self {
         Self {
             version,
@@ -45,7 +45,7 @@ impl<'a> Response<'a> {
     }
 }
 
-impl<'a> Default for Response<'a> {
+impl Default for Response {
     fn default() -> Self {
         Self {
             version: HttpVersion::V1_1,
@@ -57,7 +57,7 @@ impl<'a> Default for Response<'a> {
     }
 }
 
-impl<'a> Display for Response<'a> {
+impl Display for Response {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut text = format!("{} {} {}\r\n", self.version, self.status, self.status_text);
 
@@ -113,13 +113,15 @@ macro_rules! response {
     };
 }
 
+type OptHeaders = Option<Vec<(&'static str, &'static str)>>;
+
 // Macro rule used to create response types during compile time.
 macro_rules! create_response_types {
     ($($name:ident, $code:expr, $text:expr);*) => {
-        impl<'a> Response<'a> {
+        impl Response {
         $(
             #[inline(always)]
-            pub fn $name(body: Option<String>, headers: Option<Vec<(&'a str, &'a str)>>, http_version: Option<HttpVersion>) -> Self {
+            pub fn $name(body: Option<String>, headers: OptHeaders, http_version: Option<HttpVersion>) -> Self {
                 Self::new(http_version.unwrap_or(DEFAULT_HTTP_VERSION), $code, $text.into(), body.unwrap_or_default(), headers.unwrap_or_default())
             }
         )*

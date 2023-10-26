@@ -1,6 +1,6 @@
 use snowboard::{response, Request, Response, Server};
 
-fn router(req: Request) -> Response<'static> {
+fn router(req: Request) -> Response {
     // /{x}
     match req.parse_url().at(0) {
         Some("ping") => response!(ok, "Pong!"),
