@@ -53,7 +53,7 @@ use snowboard::async_std::task;
 use snowboard::{response, Request, Response, Server};
 use std::time::Duration;
 
-async fn index(req: Request) -> Response<'static> {
+async fn index(req: Request) -> Response {
     println!("{:?}", req);
     // Wait 1 second before sending the response
     task::sleep(Duration::from_secs(1)).await;
