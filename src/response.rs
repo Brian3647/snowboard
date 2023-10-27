@@ -23,6 +23,8 @@ pub struct Response {
 	pub headers: HashMap<&'static str, &'static str>,
 }
 
+type OptHeaders = Option<HashMap<&'static str, &'static str>>;
+
 impl Response {
 	pub fn new(
 		version: HttpVersion,
@@ -47,6 +49,24 @@ impl Response {
 		stream.write_all(bytes)?;
 		stream.flush()?;
 		Ok(())
+	}
+
+	/// Mostly used internally to create response functions during compile time.
+	/// If possible, use the `response!` macro instead or Response::new().
+	pub fn create_response(
+		http_version: Option<HttpVersion>,
+		code: u16,
+		text: &'static str,
+		body: Option<String>,
+		headers: OptHeaders,
+	) -> Self {
+		Self::new(
+			http_version.unwrap_or(DEFAULT_HTTP_VERSION),
+			code,
+			text,
+			body.unwrap_or_default(),
+			headers.unwrap_or_default(),
+		)
 	}
 }
 
@@ -120,8 +140,6 @@ macro_rules! response {
 	};
 }
 
-type OptHeaders = Option<HashMap<&'static str, &'static str>>;
-
 // Macro rule used to create response types during compile time.
 macro_rules! create_response_types {
     ($($name:ident, $code:expr, $text:expr);*) => {
@@ -129,7 +147,7 @@ macro_rules! create_response_types {
         $(
             #[inline(always)]
             pub fn $name(body: Option<String>, headers: OptHeaders, http_version: Option<HttpVersion>) -> Self {
-                Self::new(http_version.unwrap_or(DEFAULT_HTTP_VERSION), $code, $text.into(), body.unwrap_or_default(), headers.unwrap_or_default())
+                Self::create_response(http_version, $code, $text, body, headers)
             }
         )*
         }
