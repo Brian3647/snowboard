@@ -83,7 +83,13 @@ impl Server {
             return Err(Error::new(ErrorKind::InvalidInput, "Payload too large"));
         }
 
+        if payload_size == 0 {
+            crate::response!(bad_request).send_to(&mut stream)?;
+            return Err(Error::new(ErrorKind::InvalidInput, "Empty request"));
+        }
+
         let text = String::from_utf8_lossy(&buffer).replace('\0', "");
+
         let req = match Request::new(text, ip) {
             Some(req) => req,
             None => {
@@ -168,8 +174,12 @@ impl Iterator for Server {
         match self.try_accept() {
             Ok(req) => Some(req),
             Err(e) => {
-                eprintln!("Error: {:?}", e);
-                None
+                if e.kind() != ErrorKind::InvalidInput {
+                    eprintln!("Error: {:?}", e);
+                }
+
+                // Try again
+                self.next()
             }
         }
     }
