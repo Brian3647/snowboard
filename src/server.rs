@@ -137,7 +137,6 @@ impl Server {
 	/// async task. This means that multiple requests can be processed concurrently.
 	///
 	/// This function is only available when the `async` feature is enabled.
-	/// # Examples
 	///
 	/// # Example
 	/// ```no_run
