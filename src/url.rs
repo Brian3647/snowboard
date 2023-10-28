@@ -1,10 +1,11 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Url<'a> {
 	pub path: Vec<&'a str>,
 	pub search_params: HashMap<&'a str, &'a str>,
 	pub fragment: Option<&'a str>,
+	pub raw: String,
 }
 
 impl<'a> Url<'a> {
@@ -13,10 +14,40 @@ impl<'a> Url<'a> {
 		search_params: HashMap<&'a str, &'a str>,
 		fragment: Option<&'a str>,
 	) -> Self {
+		let mut raw = String::new();
+
+		for (i, p) in path.iter().enumerate() {
+			if i > 0 {
+				raw.push('/');
+			}
+
+			raw.push_str(p);
+		}
+
+		if !search_params.is_empty() {
+			raw.push('?');
+
+			for (i, (k, v)) in search_params.iter().enumerate() {
+				if i > 0 {
+					raw.push('&');
+				}
+
+				raw.push_str(k);
+				raw.push('=');
+				raw.push_str(v);
+			}
+		}
+
+		if let Some(f) = fragment {
+			raw.push('#');
+			raw.push_str(f);
+		}
+
 		Self {
 			path,
 			search_params,
 			fragment,
+			raw,
 		}
 	}
 
@@ -51,5 +82,13 @@ impl<'a> From<&'a str> for Url<'a> {
 		}
 
 		Self::new(path, search_params, fragment)
+	}
+}
+
+use std::fmt;
+
+impl Display for Url<'_> {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		write!(f, "{}", self.raw)
 	}
 }
