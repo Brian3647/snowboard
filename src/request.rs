@@ -5,7 +5,7 @@ use crate::{Method, Url};
 
 /// A server request.
 /// Parses the raw request string into a more usable format.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Request {
 	pub ip: SocketAddr,
 	/// Raw URL string.
@@ -74,5 +74,17 @@ impl Request {
 	/// Get a parsed version of the URL
 	pub fn parse_url(&self) -> Url {
 		self.url.as_str().into()
+	}
+}
+
+impl Default for Request {
+	fn default() -> Self {
+		Self {
+			ip: SocketAddr::new([0, 0, 0, 0].into(), 80),
+			url: "/".into(),
+			method: Method::GET,
+			body: String::new(),
+			headers: HashMap::new(),
+		}
 	}
 }

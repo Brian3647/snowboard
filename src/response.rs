@@ -14,7 +14,7 @@ const DEFAULT_HTTP_VERSION: HttpVersion = HttpVersion::V1_1;
 
 /// Response struct.
 /// Contains the response data and converts it to text if needed.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Response {
 	pub version: HttpVersion,
 	pub status: u16,
@@ -49,6 +49,14 @@ impl Response {
 		stream.write_all(bytes)?;
 		stream.flush()?;
 		Ok(())
+	}
+
+	pub fn set_header(&mut self, key: &'static str, value: &'static str) {
+		self.headers.insert(key, value);
+	}
+
+	pub fn content_type(&mut self, value: &'static str) {
+		self.headers.insert("Content-Type", value);
 	}
 
 	/// Mostly used internally to create response functions during compile time.

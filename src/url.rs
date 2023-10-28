@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Url<'a> {
 	pub path: Vec<&'a str>,
 	pub search_params: HashMap<&'a str, &'a str>,
