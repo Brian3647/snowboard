@@ -134,7 +134,7 @@ impl Default for Response {
 /// // Response with body, headers and custom HTTP version.
 /// let body = "everything's fine!";
 /// let mut headers = HashMap::new();
-/// headers.insert("X-Hello", "World!");
+/// headers.insert("X-Hello", "World!".into());
 /// let response = response!(ok, body, headers, HttpVersion::V1_0);
 /// ```
 #[macro_export]
