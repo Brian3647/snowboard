@@ -47,8 +47,10 @@ impl Response {
 		self.bytes = bytes.into();
 	}
 
-	pub fn send_to(&self, stream: &mut std::net::TcpStream) -> Result<(), io::Error> {
-		stream.write_all(&self.bytes)?;
+	pub fn send_to(&mut self, stream: &mut std::net::TcpStream) -> Result<(), io::Error> {
+		let mut first_bytes = self.prepare_response().into_bytes();
+		first_bytes.append(&mut self.bytes);
+		stream.write_all(&first_bytes)?;
 		stream.flush()
 	}
 
@@ -60,8 +62,9 @@ impl Response {
 		self.headers.insert("Content-Type", value);
 	}
 
-	/// Mostly used internally to create response functions during compile time.
+	/// Used internally to create response functions during compile time.
 	/// If possible, use the `response!` macro instead or Response::new().
+	#[doc(hidden)]
 	pub fn create_response(
 		http_version: Option<HttpVersion>,
 		code: u16,
@@ -77,10 +80,12 @@ impl Response {
 			headers.unwrap_or_default(),
 		)
 	}
-}
 
-impl Display for Response {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+	/// Returns the first lines of the generated response.
+	/// This function is used internally to create the response.
+	/// If you want to get the full response, use `Display` instead.
+	/// Only the body is missing from the response.
+	fn prepare_response(&self) -> String {
 		let mut text = format!("{} {} {}\r\n", self.version, self.status, self.status_text);
 
 		for (key, value) in &self.headers {
@@ -88,8 +93,14 @@ impl Display for Response {
 		}
 
 		text += "\r\n";
-		text += String::from_utf8_lossy(&self.bytes).as_ref();
+		text
+	}
+}
 
+impl Display for Response {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		let mut text = self.prepare_response();
+		text += String::from_utf8_lossy(&self.bytes).as_ref();
 		write!(f, "{}", text)
 	}
 }

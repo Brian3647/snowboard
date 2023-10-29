@@ -123,8 +123,7 @@ impl Server {
 			let handler = handler.clone();
 
 			thread::spawn(move || {
-				let response = handler(request);
-				if let Err(e) = response.send_to(&mut stream) {
+				if let Err(e) = handler(request).send_to(&mut stream) {
 					eprintln!("Error writing response: {:?}", e);
 				};
 			});

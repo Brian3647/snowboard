@@ -25,13 +25,11 @@ use snowboard::{response, Server};
 fn main() {
     let data = "Hello, world!";
 
-    Server::new("localhost:8080")
-		.data(data)
-		.run(move |request, my_data| {
-        println!("{:?}", request);
+	Server::new("localhost:8080").run(move |request| {
+		println!("{:?}", request);
 
-        response!(ok, my_data.unwrap())
-    })
+		response!(ok, data)
+	});
 }
 ```
 

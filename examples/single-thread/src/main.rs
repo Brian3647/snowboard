@@ -6,8 +6,6 @@ fn main() {
 	for (mut stream, request) in server {
 		println!("{:?}", request);
 
-		let response = response!(ok, "Hello, world!");
-
-		response.send_to(&mut stream).unwrap();
+		response!(ok, "Hello, world!").send_to(&mut stream).unwrap();
 	}
 }
