@@ -13,7 +13,7 @@ fn main() {
 		println!("{:?}", &req);
 
 		let mut res = response!(ok, data);
-		res.set_header("X-Hello", "World");
+		res.set_header("X-Hello", "World".into());
 		res
 	});
 }

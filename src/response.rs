@@ -20,10 +20,10 @@ pub struct Response {
 	pub status: u16,
 	pub status_text: &'static str,
 	pub bytes: Vec<u8>,
-	pub headers: HashMap<&'static str, &'static str>,
+	pub headers: HashMap<&'static str, String>,
 }
 
-type OptHeaders = Option<HashMap<&'static str, &'static str>>;
+type OptHeaders = Option<HashMap<&'static str, String>>;
 
 impl Response {
 	pub fn new(
@@ -31,7 +31,7 @@ impl Response {
 		status: u16,
 		status_text: &'static str,
 		body: String,
-		headers: HashMap<&'static str, &'static str>,
+		headers: HashMap<&'static str, String>,
 	) -> Self {
 		Self {
 			version,
@@ -54,11 +54,11 @@ impl Response {
 		stream.flush()
 	}
 
-	pub fn set_header(&mut self, key: &'static str, value: &'static str) {
+	pub fn set_header(&mut self, key: &'static str, value: String) {
 		self.headers.insert(key, value);
 	}
 
-	pub fn content_type(&mut self, value: &'static str) {
+	pub fn content_type(&mut self, value: String) {
 		self.headers.insert("Content-Type", value);
 	}
 
