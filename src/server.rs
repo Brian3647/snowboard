@@ -114,6 +114,11 @@ impl Server {
 	/// ```
 	#[cfg(not(feature = "async"))]
 	pub fn run(self, handler: impl Fn(Request) -> Response + Send + 'static + Clone) -> ! {
+		println!(
+			"[snowboard] Listening on {}",
+			self.tcp_listener.local_addr().unwrap()
+		);
+
 		for (mut stream, request) in self {
 			let handler = handler.clone();
 
@@ -150,12 +155,15 @@ impl Server {
 		H: Fn(Request) -> F + Clone + Send + 'static + Sync,
 		F: Future<Output = Response> + Send + 'static,
 	{
-		use async_std::task;
+		println!(
+			"[snowboard] Listening on {}",
+			self.tcp_listener.local_addr().unwrap()
+		);
 
 		for (mut stream, request) in self {
 			let handler = handler.clone();
 
-			task::spawn(async move {
+			async_std::task::spawn(async move {
 				if let Err(e) = handler(request).await.send_to(&mut stream) {
 					eprintln!("Error writing response: {:?}", e);
 				};

@@ -19,7 +19,7 @@ pub struct Response {
 	pub version: HttpVersion,
 	pub status: u16,
 	pub status_text: &'static str,
-	pub body: String,
+	pub bytes: Vec<u8>,
 	pub headers: HashMap<&'static str, &'static str>,
 }
 
@@ -37,18 +37,19 @@ impl Response {
 			version,
 			status,
 			status_text,
-			body,
+			bytes: body.into_bytes(),
 			headers,
 		}
 	}
 
-	pub fn send_to(&self, stream: &mut std::net::TcpStream) -> Result<(), io::Error> {
-		let text = self.to_string();
-		let bytes = text.as_bytes();
+	/// Set the response body as bytes.
+	pub fn set_bytes(&mut self, bytes: &[u8]) {
+		self.bytes = bytes.into();
+	}
 
-		stream.write_all(bytes)?;
-		stream.flush()?;
-		Ok(())
+	pub fn send_to(&self, stream: &mut std::net::TcpStream) -> Result<(), io::Error> {
+		stream.write_all(&self.bytes)?;
+		stream.flush()
 	}
 
 	pub fn set_header(&mut self, key: &'static str, value: &'static str) {
@@ -87,7 +88,7 @@ impl Display for Response {
 		}
 
 		text += "\r\n";
-		text += &self.body;
+		text += String::from_utf8_lossy(&self.bytes).as_ref();
 
 		write!(f, "{}", text)
 	}
@@ -99,7 +100,7 @@ impl Default for Response {
 			version: HttpVersion::V1_1,
 			status: 200,
 			status_text: "OK",
-			body: String::new(),
+			bytes: vec![],
 			headers: HashMap::new(),
 		}
 	}
