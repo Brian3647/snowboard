@@ -8,7 +8,7 @@ Pull requests and issues can be opened freely if needed using their respective t
 
 -   Run `cargo fmt`, `cargo test` and `cargo clippy` before commiting
 -   Use any extension or plugin for your edition that supports `.editorconfig`
--   Use [gitmoji](https://gitmoji.dev/) (optional but recommended)
+-   Use [gitmoji](https://gitmoji.dev/) or [cm](https://github.com/Brian3647/cm) (optional but recommended)
 -   Follow [the code of conduct](./CODE_OF_CONDUCT.md)
 
 ## **Must not:**
