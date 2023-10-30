@@ -1,4 +1,5 @@
 #![deny(missing_docs)]
+#![forbid(unsafe_code)]
 
 //! Snowboard: A simple HTTP server library in Rust.
 //!
