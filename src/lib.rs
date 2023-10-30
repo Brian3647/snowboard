@@ -1,3 +1,10 @@
+#![deny(missing_docs)]
+
+//! Snowboard: A simple HTTP server library in Rust.
+//!
+//! Support for sync & async functions, depending on feature flags.
+//! Refer to README.md for more details.
+
 mod request;
 mod response;
 mod server;

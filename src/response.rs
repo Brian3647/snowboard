@@ -16,16 +16,23 @@ const DEFAULT_HTTP_VERSION: HttpVersion = HttpVersion::V1_1;
 /// Contains the response data and converts it to text if needed.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Response {
+	/// HTTP protocol version.
 	pub version: HttpVersion,
+	/// HTTP status code.
 	pub status: u16,
+	/// According text for the status.
 	pub status_text: &'static str,
+	/// The request body, stored in bytes.
 	pub bytes: Vec<u8>,
+	/// Headers of the response
 	pub headers: HashMap<&'static str, String>,
 }
 
 type OptHeaders = Option<HashMap<&'static str, String>>;
 
 impl Response {
+	/// Manually create a Response instance.
+	/// Use Response::ok(), Response::bad_request() etc. instead when possible.
 	pub fn new(
 		version: HttpVersion,
 		status: u16,
@@ -47,6 +54,7 @@ impl Response {
 		self.bytes = bytes.into();
 	}
 
+	/// Writes the response to a TcpStream.
 	pub fn send_to(&mut self, stream: &mut std::net::TcpStream) -> Result<(), io::Error> {
 		let mut first_bytes = self.prepare_response().into_bytes();
 		first_bytes.append(&mut self.bytes);
@@ -54,10 +62,13 @@ impl Response {
 		stream.flush()
 	}
 
+	/// Sets a header to the response. Use Response::content_type for the 'Content-Type' header.
 	pub fn set_header(&mut self, key: &'static str, value: String) {
 		self.headers.insert(key, value);
 	}
 
+	/// Sets the content type of the response. Note that this does not check if the content type
+	/// is valid, so be careful.
 	pub fn content_type(&mut self, value: String) {
 		self.headers.insert("Content-Type", value);
 	}
@@ -165,6 +176,8 @@ macro_rules! create_response_types {
     ($($name:ident, $code:expr, $text:expr);*) => {
         impl Response {
         $(
+			#[doc = "Create a response with a status of "]
+			#[doc = $text]
             #[inline(always)]
             pub fn $name(body: Option<String>, headers: OptHeaders, http_version: Option<HttpVersion>) -> Self {
                 Self::create_response(http_version, $code, $text, body, headers)

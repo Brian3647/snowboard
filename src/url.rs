@@ -1,14 +1,21 @@
 use std::{collections::HashMap, fmt::Display};
 
+/// A parsed URL.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Url<'a> {
+	/// Original path, divided by `/`
 	pub path: Vec<&'a str>,
+	/// Search parameters, specified using `?key=value` in the URL.
 	pub search_params: HashMap<&'a str, &'a str>,
+	/// Fragment, specified using `#fragment` in the URL.
 	pub fragment: Option<&'a str>,
+	/// Raw copy of the original URL.
 	pub raw: String,
 }
 
 impl<'a> Url<'a> {
+	/// Creates directly a URL, and generates `raw`.
+	/// Use `Url::from` to parse a string.
 	pub fn new(
 		path: Vec<&'a str>,
 		search_params: HashMap<&'a str, &'a str>,
@@ -57,6 +64,7 @@ impl<'a> Url<'a> {
 		self.path.get(i).copied()
 	}
 
+	/// Gets a copy of a search parameter.
 	pub fn search_param(&self, key: &'a str) -> Option<&'a str> {
 		self.search_params.get(key).copied()
 	}

@@ -1,6 +1,8 @@
 use std::fmt::Display;
 
+/// Any valid HTTP method.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[allow(missing_docs)] // Unnecessary for this enum
 pub enum Method {
 	GET,
 	POST,
@@ -50,12 +52,19 @@ impl From<String> for Method {
 	}
 }
 
+/// HTTP protocol version.
+/// `HttpVersion::UNKNOWN` is used when the version is not specified or not valid.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum HttpVersion {
+	/// HTTP/1.0
 	V1_0,
+	/// HTTP/1.1
 	V1_1,
+	/// HTTP/2.0
 	V2_0,
+	/// HTTP/3.0
 	V3_0,
+	/// Unknown version
 	UNKNOWN,
 }
 
@@ -66,7 +75,14 @@ impl Display for HttpVersion {
 			HttpVersion::V1_1 => "1.1",
 			HttpVersion::V2_0 => "2.0",
 			HttpVersion::V3_0 => "3.0",
-			HttpVersion::UNKNOWN => "1.1",
+			// If the version isn't valid, and the user tries to send a response,
+			// it'll just send a 1.1 response. This might cause problems, but it's
+			// better than crashing.
+			#[allow(clippy::print_in_format_impl)]
+			HttpVersion::UNKNOWN => {
+				eprintln!("Warning: Unknown HTTP version. Defaulting to 1.1");
+				"1.1"
+			}
 		};
 
 		write!(f, "HTTP/{}", version)
