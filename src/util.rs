@@ -2,17 +2,26 @@ use std::fmt::Display;
 
 /// Any valid HTTP method.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[allow(missing_docs)] // Unnecessary for this enum
 pub enum Method {
+	/// GET
 	GET,
+	/// POST
 	POST,
+	/// PUT
 	PUT,
+	/// DELETE
 	DELETE,
+	/// HEAD
 	HEAD,
+	/// OPTIONS
 	OPTIONS,
+	/// CONNECT
 	CONNECT,
+	/// PATCH
 	PATCH,
+	/// TRACE
 	TRACE,
+	/// Unknown method
 	UNKNOWN,
 }
 

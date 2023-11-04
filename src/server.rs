@@ -37,6 +37,18 @@ impl Server {
 		}
 	}
 
+	/// Create a new server instance without unwrapping the TCP bind.
+	/// The server will listen on the given address.
+	/// The address must be in the format of `ip:port`.
+	pub fn safe_new(addr: impl Into<String>) -> Result<Self> {
+		let addr = addr.into();
+
+		Ok(Self {
+			tcp_listener: TcpListener::bind(addr)?,
+			buffer_size: DEFAULT_BUFFER_SIZE,
+		})
+	}
+
 	/// Set the buffer size used to read incoming requests.
 	/// The default buffer size is 8KiB.
 	/// The buffer size must be greater than 0.
