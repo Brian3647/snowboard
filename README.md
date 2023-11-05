@@ -20,12 +20,12 @@ snowboard = "*"
 Then, create a new Rust file with the following code:
 
 ```rust
-use snowboard::{response, Server};
+use snowboard::{response, Server, Result};
 
-fn main() {
+fn main() -> Result {
     let data = "Hello, world!";
 
-    Server::new("localhost:8080").run(move |request| {
+    Server::new("localhost:8080")?.run(move |request| {
         println!("{:?}", request);
 
         response!(ok, data)
@@ -60,8 +60,8 @@ async fn index(req: Request) -> Response {
     response!(ok, "Async works!")
 }
 
-fn main() {
-    Server::new("localhost:8080").run(index);
+fn main() -> Result {
+    Server::new("localhost:8080")?.run(index);
 }
 ```
 

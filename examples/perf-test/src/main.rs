@@ -1,8 +1,8 @@
-use snowboard::{response, Server};
+use snowboard::{response, Result, Server};
 
-fn main() {
-	let hello_bytes = &[b'h', b'e', b'l', b'l', b'o'];
-	Server::new("localhost:8080").run(move |_| {
+fn main() -> Result {
+	let hello_bytes = b"Hello, world!";
+	Server::new("localhost:8080")?.run(move |_| {
 		let mut res = response!(ok);
 		res.set_bytes(hello_bytes);
 		res

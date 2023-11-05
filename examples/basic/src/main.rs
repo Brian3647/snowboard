@@ -1,9 +1,9 @@
-use snowboard::{response, Method, Server};
+use snowboard::{response, Method, Result, Server};
 
-fn main() {
+fn main() -> Result {
 	let data = "Hello, world!";
 
-	Server::new("localhost:8080").run(move |mut req| {
+	Server::new("localhost:8080")?.run(move |mut req| {
 		if req.method != Method::GET {
 			return response!(method_not_allowed);
 		}

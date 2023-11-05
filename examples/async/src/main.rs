@@ -1,5 +1,5 @@
 use snowboard::async_std::task;
-use snowboard::{response, Request, Response, Server};
+use snowboard::{response, Request, Response, Result, Server};
 use std::time::Duration;
 
 async fn index(req: Request) -> Response {
@@ -8,6 +8,6 @@ async fn index(req: Request) -> Response {
 	response!(ok, "Async works!")
 }
 
-fn main() {
-	Server::new("localhost:8080").run(index);
+fn main() -> Result {
+	Server::new("localhost:8080")?.run(index);
 }

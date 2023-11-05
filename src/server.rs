@@ -9,17 +9,14 @@ use std::future::Future;
 pub const DEFAULT_BUFFER_SIZE: usize = 1024 * 8;
 
 use std::{
-	io::{Error, ErrorKind, Read, Result},
+	io::{self, Read},
 	net::{TcpListener, TcpStream},
 };
-
-#[cfg(not(feature = "async"))]
-use std::thread;
 
 /// Single threaded listener made for simpler servers.
 #[derive(Debug)]
 pub struct Server {
-	tcp_listener: TcpListener,
+	acceptor: TcpListener,
 	buffer_size: usize,
 }
 
@@ -28,23 +25,11 @@ impl Server {
 	/// Create a new server instance.
 	/// The server will listen on the given address.
 	/// The address must be in the format of `ip:port`.
-	pub fn new(addr: impl Into<String>) -> Self {
-		let addr = addr.into();
-
-		Self {
-			tcp_listener: TcpListener::bind(addr).unwrap(),
-			buffer_size: DEFAULT_BUFFER_SIZE,
-		}
-	}
-
-	/// Create a new server instance without unwrapping the TCP bind.
-	/// The server will listen on the given address.
-	/// The address must be in the format of `ip:port`.
-	pub fn safe_new(addr: impl Into<String>) -> Result<Self> {
+	pub fn new(addr: impl Into<String>) -> io::Result<Self> {
 		let addr = addr.into();
 
 		Ok(Self {
-			tcp_listener: TcpListener::bind(addr)?,
+			acceptor: TcpListener::bind(addr)?,
 			buffer_size: DEFAULT_BUFFER_SIZE,
 		})
 	}
@@ -82,8 +67,8 @@ impl Server {
 	///   }
 	/// }
 	/// ```
-	pub fn try_accept(&self) -> Result<(TcpStream, Request)> {
-		let stream = self.tcp_listener.accept()?;
+	pub fn try_accept(&self) -> io::Result<(TcpStream, Request)> {
+		let stream = self.acceptor.accept()?;
 
 		let (mut stream, ip) = stream;
 
@@ -92,12 +77,15 @@ impl Server {
 
 		if payload_size > self.buffer_size {
 			crate::response!(payload_too_large).send_to(&mut stream)?;
-			return Err(Error::new(ErrorKind::InvalidInput, "Payload too large"));
+			return Err(io::Error::new(
+				io::ErrorKind::InvalidInput,
+				"Payload too large",
+			));
 		}
 
 		if payload_size == 0 {
 			crate::response!(bad_request).send_to(&mut stream)?;
-			return Err(Error::new(ErrorKind::InvalidInput, "Empty request"));
+			return Err(io::Error::new(io::ErrorKind::InvalidInput, "Empty request"));
 		}
 
 		let text = String::from_utf8_lossy(&buffer).replace('\0', "");
@@ -106,7 +94,10 @@ impl Server {
 			Some(req) => req,
 			None => {
 				crate::response!(bad_request).send_to(&mut stream)?;
-				return Err(Error::new(ErrorKind::InvalidInput, "Invalid request"));
+				return Err(io::Error::new(
+					io::ErrorKind::InvalidInput,
+					"Invalid request",
+				));
 			}
 		};
 
@@ -128,13 +119,13 @@ impl Server {
 	pub fn run(self, handler: impl Fn(Request) -> Response + Send + 'static + Clone) -> ! {
 		println!(
 			"[snowboard] Listening on {}",
-			self.tcp_listener.local_addr().unwrap()
+			self.acceptor.local_addr().unwrap()
 		);
 
 		for (mut stream, request) in self {
 			let handler = handler.clone();
 
-			thread::spawn(move || {
+			std::thread::spawn(move || {
 				if let Err(e) = handler(request).send_to(&mut stream) {
 					eprintln!("Error writing response: {:?}", e);
 				};
@@ -168,7 +159,7 @@ impl Server {
 	{
 		println!(
 			"[snowboard] Listening on {}",
-			self.tcp_listener.local_addr().unwrap()
+			self.acceptor.local_addr().unwrap()
 		);
 
 		for (mut stream, request) in self {
@@ -192,7 +183,7 @@ impl Iterator for Server {
 		match self.try_accept() {
 			Ok(req) => Some(req),
 			Err(e) => {
-				if e.kind() != ErrorKind::InvalidInput {
+				if e.kind() != io::ErrorKind::InvalidInput {
 					eprintln!("Error: {:?}", e);
 				}
 

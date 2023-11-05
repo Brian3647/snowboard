@@ -1,4 +1,4 @@
-use snowboard::{response, Request, Response, Server};
+use snowboard::{response, Request, Response, Result, Server};
 
 fn router(req: Request) -> Response {
 	// /{x}
@@ -10,6 +10,6 @@ fn router(req: Request) -> Response {
 	}
 }
 
-fn main() {
-	Server::new("localhost:8080").run(router);
+fn main() -> Result {
+	Server::new("localhost:8080")?.run(router);
 }

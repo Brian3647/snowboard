@@ -1,15 +1,15 @@
-use snowboard::{response, Server};
+use snowboard::{response, Result, Server};
 
 struct ServerData {
 	hello: String,
 }
 
-fn main() {
+fn main() -> Result {
 	let data = ServerData {
 		hello: "hi!".into(),
 	};
 
-	Server::new("localhost:8080").run(move |request| {
+	Server::new("localhost:8080")?.run(move |request| {
 		println!("{:?}", request);
 
 		// Access the data
