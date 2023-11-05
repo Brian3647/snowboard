@@ -9,14 +9,18 @@ use std::future::Future;
 pub const DEFAULT_BUFFER_SIZE: usize = 1024 * 8;
 
 use std::{
-	io::{self, Read},
-	net::{TcpListener, TcpStream},
+	io,
+	net::{SocketAddr, TcpListener, TcpStream},
 };
 
+#[cfg(feature = "tls")]
+use native_tls::{TlsAcceptor, TlsStream};
+
 /// Single threaded listener made for simpler servers.
-#[derive(Debug)]
 pub struct Server {
 	acceptor: TcpListener,
+	#[cfg(feature = "tls")]
+	tls_acceptor: TlsAcceptor,
 	buffer_size: usize,
 }
 
@@ -25,11 +29,29 @@ impl Server {
 	/// Create a new server instance.
 	/// The server will listen on the given address.
 	/// The address must be in the format of `ip:port`.
+	#[cfg(not(feature = "tls"))]
 	pub fn new(addr: impl Into<String>) -> io::Result<Self> {
 		let addr = addr.into();
 
 		Ok(Self {
 			acceptor: TcpListener::bind(addr)?,
+			buffer_size: DEFAULT_BUFFER_SIZE,
+		})
+	}
+
+	/// Create a new server instance with TLS support, based on
+	/// a given TLS acceptor and adress.
+	///
+	/// The server will listen on the given address.
+	/// The address must be in the format of `ip:port`.
+	#[cfg(feature = "tls")]
+	pub fn new(addr: impl Into<String>, acceptor: TlsAcceptor) -> io::Result<Self> {
+		let addr = addr.into();
+		let tcp = TcpListener::bind(addr)?;
+
+		Ok(Self {
+			acceptor: tcp,
+			tls_acceptor: acceptor,
 			buffer_size: DEFAULT_BUFFER_SIZE,
 		})
 	}
@@ -43,15 +65,13 @@ impl Server {
 		self.buffer_size = size;
 	}
 
-	/// Try to accept a new incoming request.
-	/// Returns an error if the request could not be read.
+	/// Try to accept a new incoming request safely.
+	/// Returns an error if the request could not be read, is empty or invalid.
 	/// The request will be read into a buffer and parsed into a `Request` instance.
 	/// The buffer size can be changed with `Server::set_buffer_size()`.
-	/// The default buffer size is 8KiB.
-	/// The buffer size must be greater than 0.
 	///
 	/// # Example
-	/// ```no_run
+	/// ```no_run,rust
 	/// use snowboard::{Request, Response, Server};
 	///
 	/// let server = Server::new("localhost:8080");
@@ -67,11 +87,35 @@ impl Server {
 	///   }
 	/// }
 	/// ```
+	#[cfg(not(feature = "tls"))]
 	pub fn try_accept(&self) -> io::Result<(TcpStream, Request)> {
-		let stream = self.acceptor.accept()?;
+		let (stream, ip) = self.acceptor.accept()?;
 
-		let (mut stream, ip) = stream;
+		self.handle_request(stream, ip)
+	}
 
+	/// Try to accept a new incoming request safely, using TLS.
+	/// Returns an error if the request could not be read, is empty or invalid.
+	/// The request will be read into a buffer and parsed into a `Request` instance.
+	/// The buffer size can be changed with `Server::set_buffer_size()`.
+	#[cfg(feature = "tls")]
+	pub fn try_accept(&self) -> io::Result<(TlsStream<TcpStream>, Request)> {
+		let (tcp_stream, ip) = self.acceptor.accept()?;
+		let tls_stream = self.tls_acceptor.accept(tcp_stream).map_err(|tls_error| {
+			io::Error::new(
+				io::ErrorKind::InvalidInput,
+				format!("TLS error: {:?}", tls_error),
+			)
+		})?;
+
+		self.handle_request(tls_stream, ip)
+	}
+
+	fn handle_request<T: io::Write + io::Read>(
+		&self,
+		mut stream: T,
+		ip: SocketAddr,
+	) -> io::Result<(T, Request)> {
 		let mut buffer: Vec<u8> = vec![0; self.buffer_size];
 		let payload_size = stream.read(&mut buffer)?;
 
@@ -157,11 +201,6 @@ impl Server {
 		H: Fn(Request) -> F + Clone + Send + 'static + Sync,
 		F: Future<Output = Response> + Send + 'static,
 	{
-		println!(
-			"[snowboard] Listening on {}",
-			self.acceptor.local_addr().unwrap()
-		);
-
 		for (mut stream, request) in self {
 			let handler = handler.clone();
 
@@ -177,7 +216,11 @@ impl Server {
 }
 
 impl Iterator for Server {
+	#[cfg(not(feature = "tls"))]
 	type Item = (TcpStream, Request);
+
+	#[cfg(feature = "tls")]
+	type Item = (TlsStream<TcpStream>, Request);
 
 	fn next(&mut self) -> Option<Self::Item> {
 		match self.try_accept() {
@@ -185,6 +228,10 @@ impl Iterator for Server {
 			Err(e) => {
 				if e.kind() != io::ErrorKind::InvalidInput {
 					eprintln!("Error: {:?}", e);
+					// If the error is not caused by an invalid request, return None,
+					// since it is likely a more serious error and will potentialy repeat.
+					// (eg. port in use, invalid ssl, etc.)
+					return None;
 				}
 
 				// Try again

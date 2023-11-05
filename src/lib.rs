@@ -23,6 +23,9 @@ pub use std::net::TcpStream;
 #[cfg(feature = "async")]
 pub use async_std;
 
+#[cfg(feature = "tls")]
+pub use native_tls;
+
 /// A type alias for `std::io::Result<()>`
 /// used in `Server::new()?.run(...)`.
 ///
