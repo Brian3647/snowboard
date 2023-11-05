@@ -1,2 +1,5 @@
 **/target
 .vscode
+
+# Sample test folder I use. Nothing important.
+examples/tests

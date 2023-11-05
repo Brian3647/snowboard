@@ -23,12 +23,12 @@ Then, create a new Rust file with the following code:
 use snowboard::{response, Server, Result};
 
 fn main() -> Result {
-    let data = "Hello, world!";
+    let hello = "Hello, world!";
 
     Server::new("localhost:8080")?.run(move |request| {
         println!("{:?}", request);
 
-        response!(ok, data)
+        response!(ok, hello)
     });
 }
 ```
@@ -50,7 +50,7 @@ snowboard = { version = "*", features = ["async"] }
 // src/main.rs
 
 use snowboard::async_std::task;
-use snowboard::{response, Request, Response, Server};
+use snowboard::{response, Request, Response, Server, Result};
 use std::time::Duration;
 
 async fn index(req: Request) -> Response {

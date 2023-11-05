@@ -73,7 +73,7 @@ impl<'a> Url<'a> {
 impl<'a> From<&'a str> for Url<'a> {
 	fn from(value: &'a str) -> Self {
 		let parts: Vec<&'a str> = value.split('?').collect();
-		let path: Vec<&'a str> = parts[0].split('/').collect();
+		let path: Vec<&'a str> = parts[0].split('/').filter(|x| !x.is_empty()).collect();
 		let mut search_params = HashMap::new();
 		let mut fragment = None;
 
