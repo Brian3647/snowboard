@@ -74,7 +74,7 @@ impl Server {
 	/// ```no_run,rust
 	/// use snowboard::{Request, Response, Server};
 	///
-	/// let server = Server::new("localhost:8080");
+	/// let server = Server::new("localhost:8080").expect("failed to start server");
 	///
 	/// loop {
 	///    match server.try_accept() {
@@ -157,7 +157,7 @@ impl Server {
 	/// ```no_run
 	/// use snowboard::{response, Server};
 	///
-	/// Server::new("localhost:8080").run(|_| response!(ok));
+	/// Server::new("localhost:8080").expect("failed to start server").run(|_| response!(ok));
 	/// ```
 	#[cfg(not(feature = "async"))]
 	pub fn run(self, handler: impl Fn(Request) -> Response + Send + 'static + Clone) -> ! {
