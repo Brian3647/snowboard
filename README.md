@@ -37,7 +37,7 @@ And that's it! You got yourself a working server on :8080. Examples can be found
 
 ## **Async routes**
 
-You can use the `async` feature to change `Server::run()` so that it supports asynchronous handlers:
+You can use the `async` feature to change `Server::run(..)` so that it supports asynchronous handlers:
 
 ```toml
 # Cargo.toml
@@ -64,6 +64,32 @@ fn main() -> Result {
     Server::new("localhost:8080")?.run(index);
 }
 ```
+
+## **TLS**
+
+Use the `tls` feature (which will also install `native-tls`) to change the `Server` struct, adding support for TLS:
+
+```rust
+use anyhow::Result;
+use snowboard::{
+    native_tls::{Identity, TlsAcceptor},
+    response, Server,
+};
+
+use std::fs;
+
+fn main() -> Result<()> {
+    let der = fs::read("identity.pfx")?;
+    let password = ..;
+    let tls_acceptor = TlsAcceptor::new(Identity::from_pkcs12(&der, password)?)?;
+
+    Server::new("localhost:3000", tls_acceptor)?
+        .run(|request| response!(ok, format!("{:?}", request)))
+}
+```
+
+You can confirm it works by running `curl -k localhost:3000` _(the -k is needed to allow self-signed certificates)_
+More info can be found [here](./examples/tls/).
 
 ## **Routing**
 
