@@ -53,7 +53,9 @@ impl Server {
 
 	/// Set the buffer size used to read incoming requests.
 	/// The default buffer size is 8KiB.
-	/// The buffer size must be greater than 0.
+	///
+	/// If you want requests to actually get parsed, the buffer size must be greater than 5,
+	/// the minimum size of a "valid" HTTP request (`GET /`)
 	///
 	/// Consider using a smaller buffer size if your server
 	/// doesn't require bodies in requests, and a larger one if
@@ -62,8 +64,6 @@ impl Server {
 	/// Note that requests bigger than the buffer size will be rejected,
 	/// sending a `413 Payload Too Large` response.
 	pub fn set_buffer_size(&mut self, size: usize) {
-		assert!(size > 0, "Buffer size must be greater than 0");
-
 		self.buffer_size = size;
 	}
 
