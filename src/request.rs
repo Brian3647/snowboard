@@ -33,24 +33,24 @@ impl Request {
 		let method = Method::from(parts.next()?.to_string());
 		let url = parts.next()?.into();
 
-		let mut headers = HashMap::new();
+		// Default capacity for headers is 12, but it will grow autoamtically if needed.
+		let mut headers = HashMap::with_capacity(12);
+
 		let mut in_body = false;
 		let mut body = String::new();
 
 		for line in lines {
-			if line.is_empty() {
-				in_body = true;
-				continue;
-			} else if in_body {
-				body.push_str(line);
-				continue;
+			match (in_body, line.is_empty()) {
+				(false, true) => in_body = true,
+				(true, _) => body.push_str(line),
+				_ => {
+					let mut parts = line.splitn(2, ':');
+					let key = parts.next()?.into();
+					let value = parts.next()?.trim().into();
+
+					headers.insert(key, value);
+				}
 			}
-
-			let mut parts = line.splitn(2, ':');
-			let key = parts.next()?.into();
-			let value = parts.next()?.trim().into();
-
-			headers.insert(key, value);
 		}
 
 		Some(Self {
@@ -73,29 +73,13 @@ impl Request {
 	}
 
 	/// Sets a header using any key and value convertible to Strings
-	pub fn set_header<T, K>(&mut self, key: T, value: K)
-	where
-		T: Into<String>,
-		K: Into<String>,
-	{
-		self.headers.insert(key.into(), value.into());
+	pub fn set_header<T: ToString, K: ToString>(&mut self, k: T, v: K) {
+		self.headers.insert(k.to_string(), v.to_string());
 	}
 
 	/// Get a parsed version of the URL.
 	/// See [Url]
 	pub fn parse_url(&self) -> Url {
 		self.url.as_str().into()
-	}
-}
-
-impl Default for Request {
-	fn default() -> Self {
-		Self {
-			ip: SocketAddr::new([0, 0, 0, 0].into(), 80),
-			url: "/".into(),
-			method: Method::GET,
-			body: String::new(),
-			headers: HashMap::new(),
-		}
 	}
 }

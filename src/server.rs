@@ -132,10 +132,10 @@ impl Server {
 // This is a workaround to avoid having to copy documentation.
 
 #[cfg(not(feature = "tls"))]
-type TryAcceptResult = io::Result<(TcpStream, Result<Request, String>)>;
+type Stream = TcpStream;
 
 #[cfg(feature = "tls")]
-type TryAcceptResult = io::Result<(TlsStream<TcpStream>, Result<Request, String>)>;
+type Stream = TlsStream<TcpStream>;
 
 impl Server {
 	/// Try to accept a new incoming request safely.
@@ -162,7 +162,7 @@ impl Server {
 	///   }
 	/// }
 	/// ```
-	pub fn try_accept(&self) -> TryAcceptResult {
+	pub fn try_accept(&self) -> io::Result<(Stream, Result<Request, String>)> {
 		self.try_accept_inner()
 	}
 
@@ -215,11 +215,7 @@ impl Server {
 }
 
 impl Iterator for Server {
-	#[cfg(not(feature = "tls"))]
-	type Item = (TcpStream, Request);
-
-	#[cfg(feature = "tls")]
-	type Item = (TlsStream<TcpStream>, Request);
+	type Item = (Stream, Request);
 
 	fn next(&mut self) -> Option<Self::Item> {
 		match self.try_accept() {
