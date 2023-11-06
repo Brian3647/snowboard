@@ -67,51 +67,6 @@ impl Server {
 		self.buffer_size = size;
 	}
 
-	/// Try to accept a new incoming request safely.
-	/// Returns an error if the request could not be read, is empty or invalid.
-	/// The request will be read into a buffer and parsed into a `Request` instance.
-	/// The buffer size can be changed with `Server::set_buffer_size()`.
-	///
-	/// # Example
-	/// ```no_run,rust
-	/// use snowboard::{Request, Response, Server};
-	///
-	/// let server = Server::new("localhost:8080").expect("failed to start server");
-	///
-	/// loop {
-	///    match server.try_accept() {
-	///       Ok((stream, request)) => {
-	///         if let Ok(request) = maybe_request {
-	/// 			// Handle request
-	/// 		}
-	///      },
-	///      Err(_) => {
-	///        // Handle error
-	///      }
-	///   }
-	/// }
-	/// ```
-	#[cfg(not(feature = "tls"))]
-	pub fn try_accept(&self) -> io::Result<(TcpStream, Result<Request, String>)> {
-		let (stream, ip) = self.acceptor.accept()?;
-
-		self.handle_request(stream, ip)
-	}
-
-	/// Try to accept a new incoming request safely, using TLS.
-	/// Returns an error if the request could not be read, is empty or invalid.
-	/// The request will be read into a buffer and parsed into a `Request` instance.
-	/// The buffer size can be changed with `Server::set_buffer_size()`.
-	#[cfg(feature = "tls")]
-	pub fn try_accept(&self) -> io::Result<(TlsStream<TcpStream>, Result<Request, String>)> {
-		let (tcp_stream, ip) = self.acceptor.accept()?;
-		let tls_stream = self.tls_acceptor.accept(tcp_stream).map_err(|tls_error| {
-			io::Error::new(io::ErrorKind::InvalidInput, tls_error.to_string())
-		})?;
-
-		self.handle_request(tls_stream, ip)
-	}
-
 	fn handle_request<T: io::Write + io::Read>(
 		&self,
 		mut stream: T,
@@ -151,7 +106,7 @@ impl Server {
 	/// ```no_run,rust
 	/// use snowboard::{response, Server};
 	///
-	/// Server::new("localhost:8080").expect("failed to start server").run(|_| response!(ok));
+	/// Server::new("localhost:8080").expect("Failed to start server").run(|_| response!(ok));
 	/// ```
 	#[cfg(not(feature = "async"))]
 	pub fn run(self, handler: impl Fn(Request) -> Response + Send + 'static + Clone) -> ! {
@@ -171,7 +126,7 @@ impl Server {
 	/// Runs the server asynchronously.
 	///
 	/// This function takes a handler function as an argument. The handler function is expected to be a
-	/// function that takes a `Request` and returns a `Future` that resolves to a `Response<'static>`.
+	/// function that takes a `Request` and returns a `Future` that resolves to a `Response`.
 	///
 	/// The handler function is cloned for each request, and each request is processed in a separate
 	/// async task. This means that multiple requests can be processed concurrently.
@@ -182,7 +137,7 @@ impl Server {
 	/// ```no_run,rust
 	/// use snowboard::{response, Server};
 	///
-	/// Server::new("localhost:8080").run(async |_| response!(ok));
+	/// Server::new("localhost:8080").expected("Failed to start server").run(async |_| response!(ok));
 	/// ```
 	#[cfg(feature = "async")]
 	pub fn run<H, F>(self, handler: H) -> !
@@ -201,6 +156,61 @@ impl Server {
 		}
 
 		unreachable!("Server::run() should never return")
+	}
+}
+
+// This is a workaround to avoid having to copy documentation.
+
+#[cfg(not(feature = "tls"))]
+type TryAcceptResult = io::Result<(TcpStream, Result<Request, String>)>;
+
+#[cfg(feature = "tls")]
+type TryAcceptResult = io::Result<(TlsStream<TcpStream>, Result<Request, String>)>;
+
+impl Server {
+	/// Try to accept a new incoming request safely.
+	/// Returns an error if the request could not be read, is empty or invalid.
+	/// The request will be read into a buffer and parsed into a `Request` instance.
+	/// The buffer size can be changed with `Server::set_buffer_size()`.
+	///
+	/// # Example
+	/// ```no_run,rust
+	/// use snowboard::{Request, Response, Server};
+	///
+	/// let server = Server::new("localhost:8080").expect("failed to start server");
+	///
+	/// loop {
+	///    match server.try_accept() {
+	///       Ok((stream, request)) => {
+	///         if let Ok(request) = maybe_request {
+	///            // Handle request
+	///        }
+	///      },
+	///      Err(_) => {
+	///        // Handle error
+	///      }
+	///   }
+	/// }
+	/// ```
+	pub fn try_accept(&self) -> TryAcceptResult {
+		self.try_accept_inner()
+	}
+
+	#[cfg(not(feature = "tls"))]
+	fn try_accept_inner(&self) -> io::Result<(TcpStream, Result<Request, String>)> {
+		let (stream, ip) = self.acceptor.accept()?;
+
+		self.handle_request(stream, ip)
+	}
+
+	#[cfg(feature = "tls")]
+	fn try_accept_inner(&self) -> io::Result<(TlsStream<TcpStream>, Result<Request, String>)> {
+		let (tcp_stream, ip) = self.acceptor.accept()?;
+		let tls_stream = self.tls_acceptor.accept(tcp_stream).map_err(|tls_error| {
+			io::Error::new(io::ErrorKind::InvalidInput, tls_error.to_string())
+		})?;
+
+		self.handle_request(tls_stream, ip)
 	}
 }
 
