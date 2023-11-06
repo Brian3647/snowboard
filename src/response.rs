@@ -128,7 +128,7 @@ impl Default for Response {
 ///
 /// Usage:
 /// ```
-/// use snowboard::{response, HttpVersion};
+/// use snowboard::{response, HttpVersion, headers};
 /// use std::collections::HashMap;
 ///
 /// // Response with no headers and no body.
@@ -140,10 +140,15 @@ impl Default for Response {
 ///
 /// // Response with body, headers and custom HTTP version.
 /// let body = "everything's fine!";
-/// let mut headers = HashMap::new();
-/// headers.insert("X-Hello", "World!".into());
+/// let headers = headers! {
+///     "Content-Type" => "text/html",
+///     "X-Hello" => "World!",
+///     "X-Number" => 42,
+/// };
 /// let response = response!(ok, body, headers, HttpVersion::V1_0);
 /// ```
+///
+/// See [headers!](headers) for more information about the headers macro.
 #[macro_export]
 macro_rules! response {
 	(ok) => {
@@ -165,6 +170,33 @@ macro_rules! response {
 	($type:ident,$body:expr,$headers:expr,$http_version:expr) => {
 		$crate::Response::$type(Some($body.to_string()), Some($headers), Some($http_version))
 	};
+}
+
+/// A quick way to create a header HashMap.
+///
+/// A similar version of this macro can be found in other
+/// crates as `map!` or `hashmap!`.
+///
+/// This will convert any `$value` to a String, since
+/// the headers are stored as `HashMap<&str, String>`.
+///
+/// Example:
+/// ```rust
+/// use snowboard::headers;
+///
+/// let headers = headers! {
+///     "Content-Type" => "text/html",
+///     "X-Hello" => "World!",
+///     "X-Number" => 42,
+/// };
+/// ```
+#[macro_export]
+macro_rules! headers {
+	($($name:expr => $value:expr $(,)?)*) => {{
+		let mut map = ::std::collections::HashMap::<&str, String>::new();
+		$(map.insert($name, $value.to_string());)*
+		map
+	}};
 }
 
 // Macro rule used to create response types during compile time.

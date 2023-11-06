@@ -67,36 +67,6 @@ impl Server {
 		self.buffer_size = size;
 	}
 
-	fn handle_request<T: io::Write + io::Read>(
-		&self,
-		mut stream: T,
-		ip: SocketAddr,
-	) -> io::Result<(T, Result<Request, String>)> {
-		let mut buffer: Vec<u8> = vec![0; self.buffer_size];
-		let payload_size = stream.read(&mut buffer)?;
-
-		if payload_size > self.buffer_size {
-			crate::response!(payload_too_large).send_to(&mut stream)?;
-			return Err(io::Error::new(
-				io::ErrorKind::InvalidInput,
-				"Payload too large",
-			));
-		}
-
-		if payload_size == 0 {
-			crate::response!(bad_request).send_to(&mut stream)?;
-			return Err(io::Error::new(io::ErrorKind::InvalidInput, "Empty request"));
-		}
-
-		let text = String::from_utf8_lossy(&buffer).replace('\0', "");
-		let req = match Request::new(&text, ip) {
-			Some(req) => Ok(req),
-			None => Err(text),
-		};
-
-		Ok((stream, req))
-	}
-
 	/// Run a multi-thread listener from a handler function.
 	/// The handler function will be called when a request is received.
 	/// The handler function must return a `Response` instance. Meant for servers
@@ -211,6 +181,36 @@ impl Server {
 		})?;
 
 		self.handle_request(tls_stream, ip)
+	}
+
+	fn handle_request<T: io::Write + io::Read>(
+		&self,
+		mut stream: T,
+		ip: SocketAddr,
+	) -> io::Result<(T, Result<Request, String>)> {
+		let mut buffer: Vec<u8> = vec![0; self.buffer_size];
+		let payload_size = stream.read(&mut buffer)?;
+
+		if payload_size > self.buffer_size {
+			crate::response!(payload_too_large).send_to(&mut stream)?;
+			return Err(io::Error::new(
+				io::ErrorKind::InvalidInput,
+				"Payload too large",
+			));
+		}
+
+		if payload_size == 0 {
+			crate::response!(bad_request).send_to(&mut stream)?;
+			return Err(io::Error::new(io::ErrorKind::InvalidInput, "Empty request"));
+		}
+
+		let text = String::from_utf8_lossy(&buffer).replace('\0', "");
+		let req = match Request::new(&text, ip) {
+			Some(req) => Ok(req),
+			None => Err(text),
+		};
+
+		Ok((stream, req))
 	}
 }
 
