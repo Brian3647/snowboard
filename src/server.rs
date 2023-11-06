@@ -182,7 +182,7 @@ impl Server {
 	/// loop {
 	///    match server.try_accept() {
 	///       Ok((stream, request)) => {
-	///         if let Ok(request) = maybe_request {
+	///         if let Ok(request) = request {
 	///            // Handle request
 	///        }
 	///      },
