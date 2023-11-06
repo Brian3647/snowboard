@@ -1,0 +1,16 @@
+[package]
+name = "websocket"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.75"
+base64 = "0.21.5"
+sha1 = "0.10.6"
+tungstenite = "0.20.1"
+
+[dependencies.snowboard]
+path = "../.."
+

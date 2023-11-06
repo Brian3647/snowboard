@@ -23,7 +23,8 @@ pub struct Request {
 impl Request {
 	/// Parses and creates a requeset from raw text and an ip address.
 	/// Note that this does not parse the url (See [Request::url]).
-	pub fn new(text: String, ip: SocketAddr) -> Option<Self> {
+	pub fn new(text: impl Into<String>, ip: SocketAddr) -> Option<Self> {
+		let text = text.into();
 		let mut lines = text.lines();
 
 		let first_line = lines.next()?;

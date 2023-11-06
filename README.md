@@ -91,9 +91,14 @@ fn main() -> Result<()> {
 You can confirm it works by running `curl -k localhost:3000` _(the -k is needed to allow self-signed certificates)_
 More info can be found [here](./examples/tls/).
 
+## **Websockets**
+
+Even though websocket isn't supported by default, you can install `tungstenite` and use it without much effort.
+Check [`examples/websocket`](./examples/websocket/src/main.rs) for an example.
+
 ## **Routing**
 
-Routing can be handled easily using the `Url` struct as seen in [`examples/routing`](./examples/routing/).
+Routing can be handled easily using the `Url` struct as seen in [`examples/routing`](./examples/routing/src/main.rs).
 
 ## **Why should I use this?**
 
