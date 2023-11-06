@@ -1,4 +1,4 @@
-use snowboard::{response, Method, Result, Server};
+use snowboard::{headers, response, Method, Result, Server};
 
 fn main() -> Result {
 	let data = "Hello, world!";
@@ -12,8 +12,6 @@ fn main() -> Result {
 
 		println!("{:?}", &req);
 
-		let mut res = response!(ok, data);
-		res.set_header("X-Hello", "World".into());
-		res
+		response!(ok, data, headers! { "X-Hello" => "World!" })
 	});
 }

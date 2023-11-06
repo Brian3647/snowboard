@@ -1,6 +1,6 @@
 use std::{collections::HashMap, net::TcpStream};
 
-use snowboard::{response, Request};
+use snowboard::{headers, response, Request};
 
 use base64::engine::general_purpose::STANDARD as BASE64ENGINE;
 use base64::Engine;
@@ -8,19 +8,16 @@ use base64::Engine;
 use sha1::{Digest, Sha1};
 
 fn build_handshake<'a>(sec_key: String) -> HashMap<&'a str, String> {
-	let mut headers = HashMap::new();
-
-	headers.insert("Connection", "Upgrade".into());
-	headers.insert("Upgrade", "websocket".into());
-
 	let mut sha1 = Sha1::new();
 	sha1.update(sec_key.as_bytes());
 	sha1.update("258EAFA5-E914-47DA-95CA-C5AB0DC85B11".as_bytes());
 	let accept_value = BASE64ENGINE.encode(sha1.finalize());
 
-	headers.insert("Sec-WebSocket-Accept", accept_value);
-
-	headers
+	headers! {
+		"Upgrade" => "websocket",
+		"Connection" => "Upgrade",
+		"Sec-WebSocket-Accept" => accept_value,
+	}
 }
 
 fn main() -> anyhow::Result<()> {
