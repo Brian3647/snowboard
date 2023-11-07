@@ -6,7 +6,8 @@ use std::{collections::HashMap, fmt::Display, io};
 
 use crate::HttpVersion;
 
-const DEFAULT_HTTP_VERSION: HttpVersion = HttpVersion::V1_1;
+/// The default HTTP version used by the server.
+pub const DEFAULT_HTTP_VERSION: HttpVersion = HttpVersion::V1_1;
 
 /// Response struct.
 /// Contains the response data and converts it to text if needed.
@@ -21,10 +22,10 @@ pub struct Response {
 	/// The request body, stored in bytes.
 	pub bytes: Vec<u8>,
 	/// Headers of the response
-	pub headers: HashMap<&'static str, String>,
+	pub headers: Headers,
 }
 
-type OptHeaders = Option<HashMap<&'static str, String>>;
+type Headers = HashMap<&'static str, String>;
 
 impl Response {
 	/// Manually create a Response instance.
@@ -68,26 +69,6 @@ impl Response {
 	pub fn content_type(&mut self, value: String) {
 		self.headers.insert("Content-Type", value);
 	}
-
-	/// Used internally to create response functions during compile time.
-	/// If possible, use the `response!` macro instead or Response::new().
-	#[doc(hidden)]
-	pub fn create_response(
-		http_version: Option<HttpVersion>,
-		code: u16,
-		text: &'static str,
-		body: Option<String>,
-		headers: OptHeaders,
-	) -> Self {
-		Self::new(
-			http_version.unwrap_or(DEFAULT_HTTP_VERSION),
-			code,
-			text,
-			body.unwrap_or_default(),
-			headers.unwrap_or_default(),
-		)
-	}
-
 	/// Returns the first lines of the generated response.
 	/// This function is used internally to create the response.
 	/// If you want to get the full response, use `Display` instead.
@@ -156,19 +137,27 @@ macro_rules! response {
 	};
 
 	($type:ident) => {
-		$crate::Response::$type(None, None, None)
+		$crate::Response::$type(
+			String::new(),
+			::std::collections::HashMap::new(),
+			$crate::DEFAULT_HTTP_VERSION,
+		)
 	};
 
 	($type:ident,$body:expr) => {
-		$crate::Response::$type(Some($body.to_string()), None, None)
+		$crate::Response::$type(
+			$body.to_string(),
+			::std::collections::HashMap::new(),
+			$crate::DEFAULT_HTTP_VERSION,
+		)
 	};
 
 	($type:ident,$body:expr,$headers:expr) => {
-		$crate::Response::$type(Some($body.to_string()), Some($headers), None)
+		$crate::Response::$type($body.to_string(), $headers, $crate::DEFAULT_HTTP_VERSION)
 	};
 
 	($type:ident,$body:expr,$headers:expr,$http_version:expr) => {
-		$crate::Response::$type(Some($body.to_string()), Some($headers), Some($http_version))
+		$crate::Response::$type($body.to_string(), $headers, $http_version)
 	};
 }
 
@@ -207,8 +196,8 @@ macro_rules! create_response_types {
 			#[doc = "Create a response with a status of "]
 			#[doc = $text]
             #[inline(always)]
-            pub fn $name(body: Option<String>, headers: OptHeaders, http_version: Option<HttpVersion>) -> Self {
-                Self::create_response(http_version, $code, $text, body, headers)
+            pub fn $name(b: String, h: Headers, v: HttpVersion) -> Self {
+                Self::new(v, $code, $text, b, h)
             }
         )*
         }
