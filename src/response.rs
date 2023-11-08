@@ -1,7 +1,3 @@
-// Why is this file so big?
-// This file includes the functions for each response type.
-// (eg. ok, not_found, etc.)
-
 use std::{collections::HashMap, fmt::Display, io};
 
 use crate::HttpVersion;
