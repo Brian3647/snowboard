@@ -3,6 +3,7 @@
 ![License](https://img.shields.io/github/license/Brian3647/snowboard)
 ![GitHub issues](https://img.shields.io/github/issues/Brian3647/snowboard)
 ![Build status](https://img.shields.io/github/actions/workflow/status/Brian3647/snowboard/rust.yml)
+[![DeepSource](https://app.deepsource.com/gh/Brian3647/snowboard.svg/?label=active+issues&show_trend=false)](https://app.deepsource.com/gh/Brian3647/snowboard/)
 
 An extremelly simple library for fast & simple TCP servers in rust
 
