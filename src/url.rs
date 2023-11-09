@@ -9,52 +9,20 @@ pub struct Url<'a> {
 	pub search_params: HashMap<&'a str, &'a str>,
 	/// Fragment, specified using `#fragment` in the URL.
 	pub fragment: Option<&'a str>,
-	/// Raw copy of the original URL.
-	pub raw: String,
 }
 
 impl<'a> Url<'a> {
-	/// Creates directly a URL, and generates `raw`.
+	/// Creates directly a URL.
 	/// Use `Url::from` to parse a string.
 	pub fn new(
 		path: Vec<&'a str>,
 		search_params: HashMap<&'a str, &'a str>,
 		fragment: Option<&'a str>,
 	) -> Self {
-		let mut raw = String::new();
-
-		for (i, p) in path.iter().enumerate() {
-			if i > 0 {
-				raw.push('/');
-			}
-
-			raw.push_str(p);
-		}
-
-		if !search_params.is_empty() {
-			raw.push('?');
-
-			for (i, (k, v)) in search_params.iter().enumerate() {
-				if i > 0 {
-					raw.push('&');
-				}
-
-				raw.push_str(k);
-				raw.push('=');
-				raw.push_str(v);
-			}
-		}
-
-		if let Some(f) = fragment {
-			raw.push('#');
-			raw.push_str(f);
-		}
-
 		Self {
 			path,
 			search_params,
 			fragment,
-			raw,
 		}
 	}
 
@@ -97,6 +65,14 @@ use std::fmt;
 
 impl Display for Url<'_> {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		write!(f, "{}", self.raw)
+		let path_str = self.path.join("/");
+		let params = self
+			.search_params
+			.iter()
+			.map(|(key, value)| format!("{}={}", key, value))
+			.collect::<Vec<String>>()
+			.join("&");
+
+		write!(f, "{}?{}", path_str, params)
 	}
 }

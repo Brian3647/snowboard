@@ -134,7 +134,7 @@ macro_rules! response {
 
 	($type:ident) => {
 		$crate::Response::$type(
-			String::new(),
+			String::default(),
 			::std::collections::HashMap::new(),
 			$crate::DEFAULT_HTTP_VERSION,
 		)

@@ -23,8 +23,8 @@ pub struct Request {
 impl Request {
 	/// Parses and creates a requeset from raw text and an ip address.
 	/// Note that this does not parse the url (See [Request::url]).
-	pub fn new(text: impl Into<String>, ip: SocketAddr) -> Option<Self> {
-		let text = text.into();
+	pub fn new(text: impl ToString, ip: SocketAddr) -> Option<Self> {
+		let text = text.to_string();
 		let mut lines = text.lines();
 
 		let first_line = lines.next()?;
@@ -37,16 +37,16 @@ impl Request {
 		let mut headers = HashMap::with_capacity(12);
 
 		let mut in_body = false;
-		let mut body = String::new();
+		let mut body = String::default();
 
 		for line in lines {
 			match (in_body, line.is_empty()) {
 				(false, true) => in_body = true,
 				(true, _) => body.push_str(line),
 				_ => {
-					let mut parts = line.splitn(2, ':');
-					let key = parts.next()?.into();
-					let value = parts.next()?.trim().into();
+					let parts = line.split_once(':')?;
+					let key = parts.0.into();
+					let value = parts.0.trim().into();
 
 					headers.insert(key, value);
 				}
