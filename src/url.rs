@@ -7,22 +7,15 @@ pub struct Url<'a> {
 	pub path: Vec<&'a str>,
 	/// Search parameters, specified using `?key=value` in the URL.
 	pub search_params: HashMap<&'a str, &'a str>,
-	/// Fragment, specified using `#fragment` in the URL.
-	pub fragment: Option<&'a str>,
 }
 
 impl<'a> Url<'a> {
 	/// Creates directly a URL.
 	/// Use `Url::from` to parse a string.
-	pub fn new(
-		path: Vec<&'a str>,
-		search_params: HashMap<&'a str, &'a str>,
-		fragment: Option<&'a str>,
-	) -> Self {
+	pub fn new(path: Vec<&'a str>, search_params: HashMap<&'a str, &'a str>) -> Self {
 		Self {
 			path,
 			search_params,
-			fragment,
 		}
 	}
 
@@ -40,24 +33,19 @@ impl<'a> Url<'a> {
 
 impl<'a> From<&'a str> for Url<'a> {
 	fn from(value: &'a str) -> Self {
-		let parts: Vec<&'a str> = value.split('?').collect();
-		let path: Vec<&'a str> = parts[0].split('/').filter(|x| !x.is_empty()).collect();
+		let (path_part, query_part) = value.split_once('?').unwrap_or((value, ""));
+		let path: Vec<&'a str> = path_part.split('/').filter(|x| !x.is_empty()).collect();
+
 		let mut search_params = HashMap::new();
-		let mut fragment = None;
 
-		if parts.len() > 1 {
-			let query: Vec<&'a str> = parts[1].split('#').collect();
-			for s in query[0].split('&') {
-				let pair: Vec<&'a str> = s.split('=').collect();
-				search_params.insert(pair[0], *pair.get(1).unwrap_or(&""));
-			}
-
-			if query.len() > 1 {
-				fragment = Some(query[1]);
+		if !query_part.is_empty() {
+			for s in query_part.split('&') {
+				let (key, value) = s.split_once('=').unwrap_or((s, ""));
+				search_params.insert(key, value);
 			}
 		}
 
-		Self::new(path, search_params, fragment)
+		Self::new(path, search_params)
 	}
 }
 
