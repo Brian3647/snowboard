@@ -135,7 +135,7 @@ impl Default for Response {
 /// let response = response!(ok, body, headers, HttpVersion::V1_0);
 /// ```
 ///
-/// See [headers!](headers) for more information about the headers macro.
+/// See [headers!](crate::headers) for more information about the headers macro.
 #[macro_export]
 macro_rules! response {
 	(ok) => {

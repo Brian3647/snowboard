@@ -1,10 +1,6 @@
 #![forbid(missing_docs)]
 #![forbid(unsafe_code)]
-
-//! Snowboard: A simple HTTP server library in Rust.
-//!
-//! Support for sync & async functions, depending on feature flags.
-//! Refer to README.md for more details.
+#![doc = include_str!("../README.md")]
 
 mod request;
 mod response;
