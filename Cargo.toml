@@ -17,3 +17,7 @@ default = []
 full = ["async", "tls"]
 async = ["async-std"]
 tls = ["native-tls"]
+
+[lib]
+doctest = false
+required-features = ["full"]

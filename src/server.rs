@@ -73,7 +73,7 @@ impl Server {
 	/// where passing data to the handler is not needed.
 	///
 	/// # Example
-	/// ```no_run,rust
+	/// ```rust
 	/// use snowboard::{response, Server};
 	///
 	/// Server::new("localhost:8080").expect("Failed to start server").run(|_| response!(ok));
@@ -104,7 +104,7 @@ impl Server {
 	/// This function is only available when the `async` feature is enabled.
 	///
 	/// # Example
-	/// ```no_run,rust
+	/// ```rust
 	/// use snowboard::{response, Server};
 	///
 	/// Server::new("localhost:8080").expected("Failed to start server").run(async |_| response!(ok));
@@ -144,7 +144,7 @@ impl Server {
 	/// The buffer size can be changed with `Server::set_buffer_size()`.
 	///
 	/// # Example
-	/// ```no_run,rust
+	/// ```rust
 	/// use snowboard::{Request, Response, Server};
 	///
 	/// let server = Server::new("localhost:8080").expect("failed to start server");
