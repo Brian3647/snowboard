@@ -18,7 +18,7 @@ pub struct Response {
 	/// The request body, stored in bytes.
 	pub bytes: Vec<u8>,
 	/// Headers of the response
-	pub headers: Headers,
+	pub headers: Option<Headers>,
 }
 
 type Headers = HashMap<&'static str, String>;
@@ -31,7 +31,7 @@ impl Response {
 		status: u16,
 		status_text: &'static str,
 		body: String,
-		headers: HashMap<&'static str, String>,
+		headers: Option<Headers>,
 	) -> Self {
 		Self {
 			version,
@@ -57,14 +57,22 @@ impl Response {
 
 	/// Sets a header to the response. Use Response::content_type for the 'Content-Type' header.
 	pub fn set_header(&mut self, key: &'static str, value: String) {
-		self.headers.insert(key, value);
+		if let Some(headers) = &mut self.headers {
+			headers.insert(key, value);
+		} else {
+			let mut headers = HashMap::new();
+			headers.insert(key, value);
+			self.headers = Some(headers);
+		}
 	}
 
 	/// Sets the content type of the response. Note that this does not check if the content type
 	/// is valid, so be careful.
+	#[inline]
 	pub fn content_type(&mut self, value: String) {
-		self.headers.insert("Content-Type", value);
+		self.set_header("Content-Type", value)
 	}
+
 	/// Returns the first lines of the generated response.
 	/// This function is used internally to create the response.
 	/// If you want to get the full response, use `Display` instead.
@@ -72,8 +80,10 @@ impl Response {
 	fn prepare_response(&self) -> String {
 		let mut text = format!("{} {} {}\r\n", self.version, self.status, self.status_text);
 
-		for (key, value) in &self.headers {
-			text += &format!("{key}: {value}\r\n");
+		if let Some(headers) = &self.headers {
+			for (key, value) in headers {
+				text.push_str(&format!("{key}: {value}\r\n"));
+			}
 		}
 
 		text += "\r\n";
@@ -96,7 +106,7 @@ impl Default for Response {
 			status: 200,
 			status_text: "OK",
 			bytes: vec![],
-			headers: HashMap::new(),
+			headers: None,
 		}
 	}
 }
@@ -133,27 +143,23 @@ macro_rules! response {
 	};
 
 	($type:ident) => {
-		$crate::Response::$type(
-			String::default(),
-			::std::collections::HashMap::new(),
-			$crate::DEFAULT_HTTP_VERSION,
-		)
+		$crate::Response::$type(String::default(), None, $crate::DEFAULT_HTTP_VERSION)
 	};
 
 	($type:ident,$body:expr) => {
+		$crate::Response::$type($body.to_string(), None, $crate::DEFAULT_HTTP_VERSION)
+	};
+
+	($type:ident,$body:expr,$headers:expr) => {
 		$crate::Response::$type(
 			$body.to_string(),
-			::std::collections::HashMap::new(),
+			Some($headers),
 			$crate::DEFAULT_HTTP_VERSION,
 		)
 	};
 
-	($type:ident,$body:expr,$headers:expr) => {
-		$crate::Response::$type($body.to_string(), $headers, $crate::DEFAULT_HTTP_VERSION)
-	};
-
 	($type:ident,$body:expr,$headers:expr,$http_version:expr) => {
-		$crate::Response::$type($body.to_string(), $headers, $http_version)
+		$crate::Response::$type($body.to_string(), Some($headers), $http_version)
 	};
 }
 
@@ -192,7 +198,7 @@ macro_rules! create_response_types {
 			#[doc = "Create a response with a status of "]
 			#[doc = $text]
             #[inline(always)]
-            pub fn $name(b: String, h: Headers, v: HttpVersion) -> Self {
+            pub fn $name(b: String, h: Option<Headers>, v: HttpVersion) -> Self {
                 Self::new(v, $code, $text, b, h)
             }
         )*
