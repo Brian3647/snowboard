@@ -37,6 +37,12 @@ impl Server {
 		})
 	}
 
+	/// Get the address the server is listening on.
+	#[inline]
+	pub fn addr(&self) -> io::Result<SocketAddr> {
+		self.acceptor.local_addr()
+	}
+
 	/// Create a new server instance with TLS support, based on
 	/// a given TLS acceptor and adress.
 	///
@@ -85,7 +91,7 @@ impl Server {
 
 			std::thread::spawn(move || {
 				if let Err(e) = handler(request).send_to(&mut stream) {
-					eprintln!("Error writing response: {:?}", e);
+					eprintln!("Error writing response: {:#?}", e);
 				};
 			});
 		}
@@ -120,7 +126,7 @@ impl Server {
 
 			async_std::task::spawn(async move {
 				if let Err(e) = handler(request).await.send_to(&mut stream) {
-					eprintln!("Error writing response: {:?}", e);
+					eprintln!("Error writing response: {:#?}", e);
 				};
 			});
 		}

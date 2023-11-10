@@ -27,7 +27,7 @@ fn main() -> Result {
     let hello = "Hello, world!";
 
     Server::new("localhost:8080")?.run(move |request| {
-        println!("{:?}", request);
+        println!("{:#?}", request);
 
         response!(ok, hello)
     });
@@ -55,7 +55,7 @@ use snowboard::{response, Request, Response, Server, Result};
 use std::time::Duration;
 
 async fn index(req: Request) -> Response {
-    println!("{:?}", req);
+    println!("{#:?}", req);
     // Wait 1 second before sending the response
     task::sleep(Duration::from_secs(1)).await;
     response!(ok, "Async works!")
@@ -85,7 +85,7 @@ fn main() -> Result<()> {
     let tls_acceptor = TlsAcceptor::new(Identity::from_pkcs12(&der, password)?)?;
 
     Server::new("localhost:3000", tls_acceptor)?
-        .run(|request| response!(ok, format!("{:?}", request)))
+        .run(|request| response!(ok, format!("{:#?}", request)))
 }
 ```
 

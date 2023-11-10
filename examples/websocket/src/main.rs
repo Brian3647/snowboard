@@ -41,8 +41,6 @@ fn main() -> anyhow::Result<()> {
 use tungstenite::{Message, WebSocket};
 
 fn handle(mut stream: TcpStream, req: Result<Request, String>) -> anyhow::Result<()> {
-	println!("New stream connection: {:?}", stream);
-
 	if let Ok(req) = req {
 		if !req.headers.iter().all(|header| {
 			header == (&"Upgrade".into(), &"websocket".into())

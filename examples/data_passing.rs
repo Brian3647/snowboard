@@ -10,7 +10,7 @@ fn main() -> Result {
 	};
 
 	Server::new("localhost:8080")?.run(move |request| {
-		println!("{:?}", request);
+		println!("{:#?}", request);
 
 		// Access the data
 		response!(ok, data.hello)
