@@ -11,4 +11,4 @@ dependencies = [
 
 [[package]]
 name = "snowboard"
-version = "0.5.5"
+version = "0.5.5-fix"
