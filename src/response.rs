@@ -191,14 +191,16 @@ macro_rules! headers {
 }
 
 // Macro rule used to create response types during compile time.
+// We don't want every function to have documentation for it,
+// since it would bloat the documentation, so we hide it.
 macro_rules! create_response_types {
     ($($name:ident, $code:expr, $text:expr);*) => {
+		type OptHeaders = Option<Headers>;
+		type HttpV = HttpVersion;
         impl Response {
         $(
-			#[doc = "Create a response with a status of "]
-			#[doc = $text]
-            #[inline(always)]
-            pub fn $name(b: String, h: Option<Headers>, v: HttpVersion) -> Self {
+
+            #[inline] #[doc(hidden)] pub fn $name(b: String, h: OptHeaders, v: HttpV) -> Self {
                 Self::new(v, $code, $text, b, h)
             }
         )*
