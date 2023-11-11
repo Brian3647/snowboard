@@ -5,7 +5,7 @@
 ![Build status](https://img.shields.io/github/actions/workflow/status/Brian3647/snowboard/rust.yml)
 [![DeepSource](https://app.deepsource.com/gh/Brian3647/snowboard.svg/?label=active+issues&show_trend=false)](https://app.deepsource.com/gh/Brian3647/snowboard/)
 
-An extremelly simple library for fast TCP servers in rust
+An extremely simple library for fast HTTP & HTTPS servers in Rust
 
 \[[Request a feature/Report a bug](https://github.com/Brian3647/snowboard/issues)\]
 
