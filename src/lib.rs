@@ -1,10 +1,6 @@
 #![forbid(missing_docs)]
 #![forbid(unsafe_code)]
-
-//! # Snowboard
-//!
-//! An extremelly simple library for fast & simple TCP servers in rust.
-//! Refer to the [README.md](https://github.com/Brian3647/snowboard/blob/README.md) for more information.
+#![doc = include_str!("../README.md")]
 
 mod request;
 mod response;
