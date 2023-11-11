@@ -230,7 +230,7 @@ dependencies = [
 
 [[package]]
 name = "snowboard"
-version = "0.5.5-fix"
+version = "0.6.0"
 
 [[package]]
 name = "syn"
