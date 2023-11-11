@@ -1,6 +1,6 @@
-use snowboard::{response, Request, Response, Result, Server};
+use snowboard::{response, Request, ResponseLike, Result, Server};
 
-fn router(req: Request) -> Response {
+fn router(req: Request) -> impl ResponseLike {
 	// /{x}
 	match req.parse_url().at(0) {
 		Some("ping") => response!(ok, "Pong!"),

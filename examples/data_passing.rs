@@ -13,6 +13,8 @@ fn main() -> Result {
 		println!("{:#?}", request);
 
 		// Access the data
+		// Even though data.hello implements ResponseLike, we use
+		// response!() to avoid borrow checker issues
 		response!(ok, data.hello)
 	})
 }

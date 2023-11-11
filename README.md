@@ -100,6 +100,7 @@ fn main() -> Result<()> {
 ```
 
 You can confirm it works by running `curl -k localhost:3000` _(the -k is needed to allow self-signed certificates)_
+
 More info can be found in `examples/tls`.
 
 ## **Websockets**

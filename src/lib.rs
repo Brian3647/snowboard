@@ -9,7 +9,7 @@ mod url;
 mod util;
 
 pub use request::Request;
-pub use response::{Response, DEFAULT_HTTP_VERSION};
+pub use response::{Response, ResponseLike, DEFAULT_HTTP_VERSION};
 pub use server::{Server, DEFAULT_BUFFER_SIZE};
 pub use url::Url;
 pub use util::{HttpVersion, Method};

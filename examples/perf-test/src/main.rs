@@ -1,5 +1,6 @@
-use snowboard::{response, Result, Server};
+use snowboard::{Result, Server};
 
 fn main() -> Result {
-	Server::new("localhost:8080")?.run(|_| async { response!(ok) });
+	// Not returning anything (`()`) is the same as Response::default()
+	Server::new("localhost:8080")?.run(|_| async {});
 }

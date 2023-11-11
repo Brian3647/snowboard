@@ -1,11 +1,11 @@
 use snowboard::async_std::task;
-use snowboard::{response, Request, Response, Result, Server};
+use snowboard::{Request, ResponseLike, Result, Server};
 use std::time::Duration;
 
-async fn index(req: Request) -> Response {
+async fn index(req: Request) -> impl ResponseLike {
 	println!("{:#?}", req);
 	task::sleep(Duration::from_secs(1)).await;
-	response!(ok, "Async works!")
+	"Async works!"
 }
 
 fn main() -> Result {

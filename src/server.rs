@@ -1,5 +1,5 @@
 use crate::request::Request;
-use crate::response::Response;
+use crate::response::ResponseLike;
 
 /// The size of the buffer used to read incoming requests.
 /// It's set to 8KiB by default.
@@ -75,8 +75,8 @@ impl Server {
 
 	/// Run a multi-thread listener from a handler function.
 	/// The handler function will be called when a request is received.
-	/// The handler function must return a `Response` instance. Meant for servers
-	/// where passing data to the handler is not needed.
+	/// The handler function must return anything that implements
+	/// the `ResponseLike` trait.
 	///
 	/// # Example
 	/// ```rust
@@ -85,12 +85,15 @@ impl Server {
 	/// Server::new("localhost:8080").expect("Failed to start server").run(|_| response!(ok));
 	/// ```
 	#[cfg(not(feature = "async"))]
-	pub fn run(self, handler: impl Fn(Request) -> Response + Send + 'static + Clone) -> ! {
+	pub fn run<T: ResponseLike>(
+		self,
+		handler: impl Fn(Request) -> T + Send + 'static + Clone,
+	) -> ! {
 		for (mut stream, request) in self {
 			let handler = handler.clone();
 
 			std::thread::spawn(move || {
-				if let Err(e) = handler(request).send_to(&mut stream) {
+				if let Err(e) = handler(request).to_response().send_to(&mut stream) {
 					eprintln!("Error writing response: {:#?}", e);
 				};
 			});
@@ -116,15 +119,16 @@ impl Server {
 	/// Server::new("localhost:8080").expected("Failed to start server").run(async |_| response!(ok));
 	/// ```
 	#[cfg(feature = "async")]
-	pub fn run<F>(self, handler: fn(Request) -> F) -> !
+	pub fn run<F, T>(self, handler: fn(Request) -> F) -> !
 	where
-		F: Future<Output = Response> + Send + 'static,
+		F: Future<Output = T> + Send + 'static,
+		T: ResponseLike,
 	{
 		for (mut stream, request) in self {
 			let handler = handler.clone();
 
 			async_std::task::spawn(async move {
-				if let Err(e) = handler(request).await.send_to(&mut stream) {
+				if let Err(e) = handler(request).await.to_response().send_to(&mut stream) {
 					eprintln!("Error writing response: {:#?}", e);
 				};
 			});
