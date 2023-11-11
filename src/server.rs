@@ -116,9 +116,8 @@ impl Server {
 	/// Server::new("localhost:8080").expected("Failed to start server").run(async |_| response!(ok));
 	/// ```
 	#[cfg(feature = "async")]
-	pub fn run<H, F>(self, handler: H) -> !
+	pub fn run<F>(self, handler: fn(Request) -> F) -> !
 	where
-		H: Fn(Request) -> F + Clone + Send + 'static + Sync,
 		F: Future<Output = Response> + Send + 'static,
 	{
 		for (mut stream, request) in self {
@@ -173,7 +172,7 @@ impl Server {
 	}
 
 	#[cfg(not(feature = "tls"))]
-	fn try_accept_inner(&self) -> io::Result<(TcpStream, Result<Request, String>)> {
+	fn try_accept_inner(&self) -> io::Result<(Stream, Result<Request, String>)> {
 		let (stream, ip) = self.acceptor.accept()?;
 
 		self.handle_request(stream, ip)
