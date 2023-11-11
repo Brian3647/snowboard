@@ -61,7 +61,7 @@ snowboard = { version = "*", features = ["async"] }
 // src/main.rs
 
 use snowboard::async_std::task;
-use snowboard::{response, Request, ResponseLike, Server, Result};
+use snowboard::{Request, ResponseLike, Server, Result};
 use std::time::Duration;
 
 async fn index(req: Request) -> impl ResponseLike {
