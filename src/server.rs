@@ -180,13 +180,22 @@ impl Server {
 	}
 
 	#[cfg(feature = "tls")]
-	fn try_accept_inner(&self) -> io::Result<(TlsStream<TcpStream>, Result<Request, String>)> {
-		let (tcp_stream, ip) = self.acceptor.accept()?;
-		let tls_stream = self.tls_acceptor.accept(tcp_stream).map_err(|tls_error| {
-			io::Error::new(io::ErrorKind::InvalidInput, tls_error.to_string())
-		})?;
+	fn try_accept_inner(&self) -> io::Result<(Stream, Result<Request, String>)> {
+		let (mut tcp_stream, ip) = self.acceptor.accept()?;
+		match self.tls_acceptor.accept(tcp_stream.try_clone()?) {
+			Ok(tls_stream) => self.handle_request(tls_stream, ip),
+			Err(_) => {
+				// Write a 426 Upgrade Required response to the stream
+				crate::response!(
+					upgrade_required,
+					"HTTP is not supported. Use HTTPS instead."
+				)
+				.send_to(&mut tcp_stream)?;
 
-		self.handle_request(tls_stream, ip)
+				// Continue to the next connection
+				Err(io::Error::from(io::ErrorKind::ConnectionAborted))
+			}
+		}
 	}
 
 	fn handle_request<T: io::Write + io::Read>(
@@ -226,7 +235,10 @@ impl Iterator for Server {
 	fn next(&mut self) -> Option<Self::Item> {
 		match self.try_accept() {
 			Ok((stream, Ok(req))) => Some((stream, req)),
-			// If the request is invalid, we just ignore it and try again.
+			// Unsupported error caused by TLS handshake failure, ignoring it.
+			#[cfg(feature = "tls")]
+			Err(e) if e.kind() == io::ErrorKind::ConnectionAborted => self.next(),
+			// Parsing the request failed (probably due to it being empty), so we ignore it.
 			Ok((_, Err(_))) => self.next(),
 			Err(e) => {
 				eprintln!("Server generated error: {:#?}", e);
