@@ -199,7 +199,6 @@ macro_rules! create_response_types {
 		type HttpV = HttpVersion;
         impl Response {
         $(
-
             #[inline] #[doc(hidden)] pub fn $name(b: String, h: OptHeaders, v: HttpV) -> Self {
                 Self::new(v, $code, $text, b, h)
             }
