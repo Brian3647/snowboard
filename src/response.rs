@@ -102,9 +102,9 @@ impl Display for Response {
 impl Default for Response {
 	fn default() -> Self {
 		Self {
-			version: HttpVersion::V1_1,
+			version: DEFAULT_HTTP_VERSION,
 			status: 200,
-			status_text: "OK",
+			status_text: "Ok",
 			bytes: vec![],
 			headers: None,
 		}
