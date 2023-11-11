@@ -11,19 +11,8 @@ PREV_PWD="$(pwd)"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd $SCRIPT_DIR
 
-# Check if the script is in the same directory as the program
-if [ ! -f "src/main.rs" ]; then
-  echo "Error: Script must be run from the same directory as the program"
-  exit 1
-fi
-
 # Build the program with cargo --release and pipe the output to a file
 cargo build --release > build.log 2>&1
-
-if [ ! -f $EXECUTABLE ]; then
-  echo "Error: Script must be run from the same directory as the program"
-  exit 1
-fi
 
 # Start the program in the background
 $EXECUTABLE > server.log 2>&1 &
