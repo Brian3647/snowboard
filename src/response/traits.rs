@@ -36,7 +36,7 @@ impl ResponseLike for String {
 impl ResponseLike for Vec<u8> {
 	#[inline]
 	fn to_response(self) -> Response {
-		let mut res = Response::ok(String::new(), None, super::DEFAULT_HTTP_VERSION);
+		let mut res = Response::ok(String::default(), None, super::DEFAULT_HTTP_VERSION);
 		res.set_bytes(&self);
 		res
 	}

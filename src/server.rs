@@ -1,5 +1,5 @@
-use crate::request::Request;
-use crate::response::ResponseLike;
+use crate::Request;
+use crate::ResponseLike;
 
 /// The size of the buffer used to read incoming requests.
 /// It's set to 8KiB by default.

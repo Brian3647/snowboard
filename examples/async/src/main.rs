@@ -5,6 +5,7 @@ use std::time::Duration;
 async fn index(req: Request) -> impl ResponseLike {
 	println!("{:#?}", req);
 	task::sleep(Duration::from_secs(1)).await;
+
 	"Async works!"
 }
 
