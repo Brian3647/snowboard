@@ -61,14 +61,15 @@ snowboard = { version = "*", features = ["async"] }
 // src/main.rs
 
 use snowboard::async_std::task;
-use snowboard::{response, Request, Response, Server, Result};
+use snowboard::{response, Request, ResponseLike, Server, Result};
 use std::time::Duration;
 
-async fn index(req: Request) -> Response {
+async fn index(req: Request) -> impl ResponseLike {
     println!("{#:?}", req);
     // Wait 1 second before sending the response
     task::sleep(Duration::from_secs(1)).await;
-    response!(ok, "Async works!")
+
+    "Async works"
 }
 
 fn main() -> Result {
