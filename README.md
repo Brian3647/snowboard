@@ -21,15 +21,25 @@ snowboard = "*"
 Then, create a new Rust file with the following code:
 
 ```rust
-use snowboard::{response, Server, Result};
+use snowboard::{headers, response, Method, Result, Server};
 
 fn main() -> Result {
-    let hello = "Hello, world!";
+    let data = "Hello, world!";
 
-    Server::new("localhost:8080")?.run(move |request| {
-        println!("{:#?}", request);
+    let server = Server::new("localhost:8080")?;
 
-        response!(ok, hello)
+    println!("Listening on {}", server.addr().unwrap());
+
+    server.run(move |mut req| {
+        if req.method != Method::GET {
+            return response!(method_not_allowed);
+        }
+
+        req.set_header("X-Server", "Snowboard");
+
+        println!("{:#?}", &req);
+
+        response!(ok, data, headers! { "X-Hello" => "World!" })
     });
 }
 ```
