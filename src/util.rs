@@ -44,9 +44,9 @@ impl Display for Method {
 	}
 }
 
-impl From<String> for Method {
-	fn from(method: String) -> Self {
-		match method.as_str() {
+impl From<&str> for Method {
+	fn from(method: &str) -> Self {
+		match method {
 			"GET" => Method::GET,
 			"POST" => Method::POST,
 			"PUT" => Method::PUT,
@@ -98,9 +98,9 @@ impl Display for HttpVersion {
 	}
 }
 
-impl From<String> for HttpVersion {
-	fn from(version: String) -> Self {
-		match version.to_uppercase().as_str() {
+impl From<&str> for HttpVersion {
+	fn from(version: &str) -> Self {
+		match version {
 			"HTTP/1.0" => HttpVersion::V1_0,
 			"HTTP/1.1" => HttpVersion::V1_1,
 			"HTTP/2.0" => HttpVersion::V2_0,

@@ -1,8 +1,6 @@
 use snowboard::{headers, response, Method, Result, Server};
 
 fn main() -> Result {
-	let data = "Hello, world!";
-
 	let server = Server::new("localhost:8080")?;
 
 	println!("Listening on {}", server.addr().unwrap());
@@ -16,6 +14,10 @@ fn main() -> Result {
 
 		println!("{:#?}", &req);
 
-		response!(ok, data, headers! { "X-Hello" => "World!" })
+		response!(
+			ok,
+			format!("{:#?}", req),
+			headers! { "X-Hello" => "World!" }
+		)
 	});
 }

@@ -30,7 +30,7 @@ impl Request {
 		let first_line = lines.next()?;
 		let mut parts = first_line.split_whitespace();
 
-		let method = Method::from(parts.next()?.to_string());
+		let method = Method::from(parts.next()?);
 		let url = parts.next()?.into();
 
 		// Default capacity for headers is 12, but it will grow autoamtically if needed.
@@ -46,7 +46,7 @@ impl Request {
 				_ => {
 					let parts = line.split_once(':')?;
 					let key = parts.0.into();
-					let value = parts.0.trim().into();
+					let value = parts.1.trim().into();
 
 					headers.insert(key, value);
 				}
