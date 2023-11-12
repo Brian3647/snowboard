@@ -65,8 +65,7 @@ use snowboard::async_std::task;
 use snowboard::{Request, ResponseLike, Server, Result};
 use std::time::Duration;
 
-async fn index(req: Request) -> impl ResponseLike {
-    println!("{#:?}", req);
+async fn index(_: Request) -> impl ResponseLike {
     // Wait 1 second before sending the response
     task::sleep(Duration::from_secs(1)).await;
 
