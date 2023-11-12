@@ -4,6 +4,7 @@
 ![GitHub issues](https://img.shields.io/github/issues/Brian3647/snowboard)
 ![Build status](https://img.shields.io/github/actions/workflow/status/Brian3647/snowboard/rust.yml)
 [![DeepSource](https://app.deepsource.com/gh/Brian3647/snowboard.svg/?label=active+issues&show_trend=false)](https://app.deepsource.com/gh/Brian3647/snowboard/)
+[![dependency status](https://deps.rs/repo/github/Brian3647/snowboard/status.svg)](https://deps.rs/repo/github/Brian3647/snowboard)
 
 An extremely simple library for fast HTTP & HTTPS servers in Rust
 
