@@ -161,11 +161,11 @@ impl Server {
 	/// let server = Server::new("localhost:8080").expect("failed to start server");
 	///
 	/// while let Ok((stream, request)) = server.try_accept() {
-	/// 	if let Ok(request) = request {
-	/// 		// Handle the request
-	/// 	} else {
-	/// 		// Handle an invalid request
-	/// 	}
+	///     if let Ok(request) = request {
+	///         // Handle the request
+	///     } else {
+	///         // Handle an invalid request
+	///     }
 	/// }
 	/// ```
 	#[inline]
