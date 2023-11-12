@@ -37,12 +37,6 @@ impl Server {
 		})
 	}
 
-	/// Get the address the server is listening on.
-	#[inline]
-	pub fn addr(&self) -> io::Result<SocketAddr> {
-		self.acceptor.local_addr()
-	}
-
 	/// Create a new server instance with TLS support, based on
 	/// a given TLS acceptor and adress.
 	///
@@ -55,6 +49,12 @@ impl Server {
 			tls_acceptor: acceptor,
 			buffer_size: DEFAULT_BUFFER_SIZE,
 		})
+	}
+
+	/// Get the address the server is listening on.
+	#[inline]
+	pub fn addr(&self) -> io::Result<SocketAddr> {
+		self.acceptor.local_addr()
 	}
 
 	/// Set the buffer size used to read incoming requests.
@@ -116,7 +116,9 @@ impl Server {
 	/// ```rust
 	/// use snowboard::{response, Server};
 	///
-	/// Server::new("localhost:8080").expected("Failed to start server").run(async |_| response!(ok));
+	/// Server::new("localhost:8080")
+	///     .expect("Failed to start server")
+	///     .run(|_| async { response!(ok) });
 	/// ```
 	#[cfg(feature = "async")]
 	pub fn run<F, T>(self, handler: fn(Request) -> F) -> !
@@ -158,27 +160,23 @@ impl Server {
 	///
 	/// let server = Server::new("localhost:8080").expect("failed to start server");
 	///
-	/// loop {
-	///    match server.try_accept() {
-	///       Ok((stream, request)) => {
-	///         if let Ok(request) = request {
-	///            // Handle request
-	///        }
-	///      },
-	///      Err(_) => {
-	///        // Handle error
-	///      }
-	///   }
+	/// while let Ok((stream, request)) = server.try_accept() {
+	/// 	if let Ok(request) = request {
+	/// 		// Handle the request
+	/// 	} else {
+	/// 		// Handle an invalid request
+	/// 	}
 	/// }
 	/// ```
+	#[inline]
 	pub fn try_accept(&self) -> io::Result<(Stream, Result<Request, String>)> {
 		self.try_accept_inner()
 	}
 
 	#[cfg(not(feature = "tls"))]
+	#[inline]
 	fn try_accept_inner(&self) -> io::Result<(Stream, Result<Request, String>)> {
 		let (stream, ip) = self.acceptor.accept()?;
-
 		self.handle_request(stream, ip)
 	}
 
@@ -238,11 +236,10 @@ impl Iterator for Server {
 	fn next(&mut self) -> Option<Self::Item> {
 		match self.try_accept() {
 			Ok((stream, Ok(req))) => Some((stream, req)),
-			// Unsupported error caused by TLS handshake failure, ignoring it.
-			#[cfg(feature = "tls")]
-			Err(e) if e.kind() == io::ErrorKind::ConnectionAborted => self.next(),
 			// Parsing the request failed (probably due to it being empty), so we ignore it.
 			Ok((_, Err(_))) => self.next(),
+			// Probably unsupported error caused by TLS handshake failure, ignoring it.
+			Err(e) if e.kind() == io::ErrorKind::ConnectionAborted => self.next(),
 			Err(e) => {
 				eprintln!("Server generated error: {:#?}", e);
 				None
