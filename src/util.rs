@@ -79,22 +79,20 @@ pub enum HttpVersion {
 
 impl Display for HttpVersion {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		let version = match self {
-			HttpVersion::V1_0 => "1.0",
-			HttpVersion::V1_1 => "1.1",
-			HttpVersion::V2_0 => "2.0",
-			HttpVersion::V3_0 => "3.0",
-			// If the version isn't valid, and the user tries to send a response,
-			// it'll just send a 1.1 response. This might cause problems, but it's
-			// better than crashing.
-			#[allow(clippy::print_in_format_impl)]
-			HttpVersion::UNKNOWN => {
-				eprintln!("Warning: Unknown HTTP version. Defaulting to 1.1");
-				"1.1"
+		write!(
+			f,
+			"HTTP/{}",
+			match self {
+				HttpVersion::V1_0 => "1.0",
+				HttpVersion::V1_1 => "1.1",
+				HttpVersion::V2_0 => "2.0",
+				HttpVersion::V3_0 => "3.0",
+				// If the version isn't valid, and the user tries to send a response,
+				// it'll just send a 1.1 response. This might cause problems, but it's
+				// better than crashing.
+				HttpVersion::UNKNOWN => "1.1",
 			}
-		};
-
-		write!(f, "HTTP/{}", version)
+		)
 	}
 }
 

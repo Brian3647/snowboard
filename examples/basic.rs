@@ -14,10 +14,6 @@ fn main() -> Result {
 
 		println!("{:#?}", &req);
 
-		response!(
-			ok,
-			format!("{:#?}", req),
-			headers! { "X-Hello" => "World!" }
-		)
+		response!(ok, format!("{req:#?}"), headers! { "X-Hello" => "World!" })
 	});
 }

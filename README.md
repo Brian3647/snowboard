@@ -38,7 +38,7 @@ fn main() -> Result {
 
         req.set_header("X-Server", "Snowboard");
 
-        println!("{:#?}", &req);
+        println!("{req:#?}");
 
         response!(ok, data, headers! { "X-Hello" => "World!" })
     });
@@ -96,7 +96,7 @@ fn main() -> Result<()> {
     let tls_acceptor = TlsAcceptor::new(Identity::from_pkcs12(&der, password)?)?;
 
     Server::new("localhost:3000", tls_acceptor)?
-        .run(|request| format!("{:#?}", request))
+        .run(|request| format!("{request:#?}"))
 }
 ```
 

@@ -11,5 +11,5 @@ fn main() -> Result<()> {
 	let password = "1234";
 	let tls_acceptor = TlsAcceptor::new(Identity::from_pkcs12(&der, password)?)?;
 
-	Server::new("localhost:3000", tls_acceptor)?.run(|request| format!("{:#?}", request))
+	Server::new("localhost:3000", tls_acceptor)?.run(|request| format!("{request:#?}"))
 }
