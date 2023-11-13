@@ -22,21 +22,21 @@ impl ResponseLike for () {
 impl ResponseLike for &str {
 	#[inline]
 	fn to_response(self) -> Response {
-		Response::ok(self.into(), None, super::DEFAULT_HTTP_VERSION)
+		crate::response!(ok, self)
 	}
 }
 
 impl ResponseLike for String {
 	#[inline]
 	fn to_response(self) -> Response {
-		Response::ok(self, None, super::DEFAULT_HTTP_VERSION)
+		crate::response!(ok, self)
 	}
 }
 
 impl ResponseLike for Vec<u8> {
 	#[inline]
 	fn to_response(self) -> Response {
-		let mut res = Response::ok(String::default(), None, super::DEFAULT_HTTP_VERSION);
+		let mut res = crate::response!(ok);
 		res.set_bytes(&self);
 		res
 	}
