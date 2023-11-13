@@ -1,6 +1,6 @@
 [package]
 name = "snowboard"
-version = "0.6.1"
+version = "0.6.2"
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/Brian3647/snowboard"
@@ -25,4 +25,3 @@ tls = ["native-tls"]
 
 [lib]
 doctest = false
-required-features = ["full"]
