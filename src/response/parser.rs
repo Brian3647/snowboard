@@ -30,21 +30,16 @@ impl Response {
 		version: HttpVersion,
 		status: u16,
 		status_text: &'static str,
-		body: String,
+		bytes: Vec<u8>,
 		headers: Option<Headers>,
 	) -> Self {
 		Self {
 			version,
 			status,
 			status_text,
-			bytes: body.into_bytes(),
+			bytes,
 			headers,
 		}
-	}
-
-	/// Set the response body as bytes.
-	pub fn set_bytes(&mut self, bytes: &[u8]) {
-		self.bytes = bytes.into();
 	}
 
 	/// Writes the response to a TcpStream.
@@ -143,23 +138,19 @@ macro_rules! response {
 	};
 
 	($type:ident) => {
-		$crate::Response::$type(String::default(), None, $crate::DEFAULT_HTTP_VERSION)
+		$crate::Response::$type(vec![], None, $crate::DEFAULT_HTTP_VERSION)
 	};
 
 	($type:ident,$body:expr) => {
-		$crate::Response::$type($body.to_string(), None, $crate::DEFAULT_HTTP_VERSION)
+		$crate::Response::$type($body.into(), None, $crate::DEFAULT_HTTP_VERSION)
 	};
 
 	($type:ident,$body:expr,$headers:expr) => {
-		$crate::Response::$type(
-			$body.to_string(),
-			Some($headers),
-			$crate::DEFAULT_HTTP_VERSION,
-		)
+		$crate::Response::$type($body.into(), Some($headers), $crate::DEFAULT_HTTP_VERSION)
 	};
 
 	($type:ident,$body:expr,$headers:expr,$http_version:expr) => {
-		$crate::Response::$type($body.to_string(), Some($headers), $http_version)
+		$crate::Response::$type($body.into(), Some($headers), $http_version)
 	};
 }
 
@@ -199,7 +190,7 @@ macro_rules! create_response_types {
 		type HttpV = HttpVersion;
         impl Response {
         $(
-            #[inline] #[doc(hidden)] pub fn $name(b: String, h: OptHeaders, v: HttpV) -> Self {
+            #[inline] #[doc(hidden)] pub fn $name(b: Vec<u8>, h: OptHeaders, v: HttpV) -> Self {
                 Self::new(v, $code, $text, b, h)
             }
         )*

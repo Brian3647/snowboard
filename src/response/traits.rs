@@ -36,9 +36,7 @@ impl ResponseLike for String {
 impl ResponseLike for Vec<u8> {
 	#[inline]
 	fn to_response(self) -> Response {
-		let mut res = crate::response!(ok);
-		res.set_bytes(&self);
-		res
+		crate::response!(ok, self)
 	}
 }
 
