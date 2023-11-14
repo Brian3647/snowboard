@@ -113,6 +113,30 @@ Check `examples/websocket` for an example.
 
 Routing can be handled easily using the `Url` struct as seen in `examples/routing.rs`.
 
+## **Integration**
+
+Snowboard's `ResponseLike` is designed to work with pretty much anything, but it wont by default with certain cases like `maud`'s `html!` macro _(a `maud` feature was added for this specific ocassion)_. If you happen to use a lot a crate that doesn't work with Snowboard, please open an issue, pr or implement `ResponseLike` for it:
+
+```rust
+use snowboard::{Response, ResponseLike, Server};
+
+struct Example {
+    num: usize,
+}
+
+impl ResponseLike for Example {
+    fn to_response(self) -> Response {
+        snowboard::response!(ok, self.num.to_string())
+    }
+}
+
+fn main() -> snowboard::Result {
+    Server::new("localhost:8080")
+        .unwrap()
+        .run(|_| Example { num: 5 });
+}
+```
+
 ## **Why should I use this?**
 
 Snowboard is designed and created for people who like coding their own things from little to nothing, like me.
