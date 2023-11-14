@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
 /// Any valid HTTP method.
+#[cfg_attr(feature = "json", derive(serde::Serialize))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Method {
 	/// GET
@@ -63,6 +64,7 @@ impl From<&str> for Method {
 
 /// HTTP protocol version.
 /// `HttpVersion::UNKNOWN` is used when the version is not specified or not valid.
+#[cfg_attr(feature = "json", derive(serde::Serialize))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum HttpVersion {
 	/// HTTP/1.0

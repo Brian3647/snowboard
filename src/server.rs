@@ -127,8 +127,6 @@ impl Server {
 		T: ResponseLike,
 	{
 		for (mut stream, request) in self {
-			let handler = handler.clone();
-
 			async_std::task::spawn(async move {
 				if let Err(e) = handler(request).await.to_response().send_to(&mut stream) {
 					eprintln!("Error writing response: {:#?}", e);

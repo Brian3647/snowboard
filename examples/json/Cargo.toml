@@ -1,0 +1,11 @@
+[package]
+name = "json"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies.snowboard]
+path = "../../"
+features = ["json"]
+
+[dependencies]
+serde_json = "*"

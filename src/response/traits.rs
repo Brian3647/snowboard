@@ -50,3 +50,11 @@ impl ResponseLike for Result<Response, Response> {
 		}
 	}
 }
+
+#[cfg(feature = "json")]
+impl ResponseLike for serde_json::Value {
+	#[inline]
+	fn to_response(self) -> Response {
+		crate::response!(ok, self.to_string())
+	}
+}

@@ -1,6 +1,7 @@
 use std::{collections::HashMap, fmt::Display};
 
 /// A parsed URL.
+#[cfg_attr(feature = "json", derive(serde::Serialize))]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Url<'a> {
 	/// Original path, divided by `/`

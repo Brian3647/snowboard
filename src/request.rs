@@ -1,11 +1,12 @@
-use std::collections::HashMap;
 use std::net::SocketAddr;
+use std::{borrow::Cow, collections::HashMap};
 
 use crate::{Method, Url};
 
 /// A server request.
 /// Parses the raw request string into a more usable format.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "json", derive(serde::Serialize))]
 pub struct Request {
 	/// The ip from the socket connection.
 	pub ip: SocketAddr,
@@ -15,7 +16,7 @@ pub struct Request {
 	/// Method used in the request. Might be Method::Unknown if parsing fails.
 	pub method: Method,
 	/// Body of the request.
-	pub body: String,
+	pub body: Vec<u8>,
 	/// Parsed headers.
 	pub headers: HashMap<String, String>,
 }
@@ -37,12 +38,12 @@ impl Request {
 		let mut headers = HashMap::with_capacity(12);
 
 		let mut in_body = false;
-		let mut body = String::default();
+		let mut body = Vec::default();
 
 		for line in lines {
 			match (in_body, line.is_empty()) {
 				(false, true) => in_body = true,
-				(true, _) => body.push_str(line),
+				(true, _) => body.extend_from_slice(line.as_bytes()),
 				_ => {
 					let parts = line.split_once(':')?;
 					let key = parts.0.into();
@@ -75,6 +76,21 @@ impl Request {
 	/// Sets a header using any key and value convertible to Strings
 	pub fn set_header<T: ToString, K: ToString>(&mut self, k: T, v: K) {
 		self.headers.insert(k.to_string(), v.to_string());
+	}
+
+	/// Gets the body as a string.
+	/// See [std::string::String::from_utf8]
+	pub fn text(&self) -> Cow<'_, str> {
+		String::from_utf8_lossy(&self.body)
+	}
+
+	/// Get the body as a JSON value.
+	#[cfg(feature = "json")]
+	pub fn json<T>(&self) -> serde_json::Result<T>
+	where
+		T: for<'a> serde::de::Deserialize<'a>,
+	{
+		serde_json::from_slice(&self.body)
 	}
 
 	/// Get a parsed version of the URL.
