@@ -7,6 +7,7 @@ pub trait ResponseLike {
 }
 
 impl ResponseLike for Response {
+	#[inline]
 	fn to_response(self) -> Response {
 		self
 	}
@@ -41,11 +42,13 @@ impl ResponseLike for Vec<u8> {
 }
 
 // Particuraly useful for `?` operators when using outside functions.
-impl ResponseLike for Result<Response, Response> {
-	#[inline]
+impl<T> ResponseLike for Result<T, Response>
+where
+	T: ResponseLike,
+{
 	fn to_response(self) -> Response {
 		match self {
-			Ok(res) => res,
+			Ok(res) => res.to_response(),
 			Err(res) => res,
 		}
 	}

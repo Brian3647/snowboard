@@ -117,7 +117,7 @@ impl Default for Response {
 /// let response = response!(bad_request);
 ///
 /// // Response with body and no headers.
-/// // Note that $body requires to implement Display.
+/// // Note that $body requires to implement `Into<Vec<u8>>`.
 /// let response =  response!(internal_server_error, "oopsies");
 ///
 /// // Response with body, headers and custom HTTP version.

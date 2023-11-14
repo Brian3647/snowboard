@@ -93,6 +93,38 @@ impl Request {
 		serde_json::from_slice(&self.body)
 	}
 
+	/// Get the body as a JSON value, converting a parse error to a bad request response.
+	///
+	/// # Example
+	/// ```rust
+	/// # extern crate serde;
+	/// # extern crate serde_json;
+	/// use snowboard::Server;
+	/// use serde::Deserialize;
+	///
+	/// #[derive(Deserialize)]
+	/// struct MyBody {
+	/// 	foo: String,
+	/// }
+	///
+	/// fn main() -> snowboard::Result {
+	/// 	Server::new("localhost:3000")?.run(|r| {
+	/// 		let body: MyBody = r.force_json()?;
+	///
+	/// 		Ok(serde_json::json!({
+	/// 			"foo": body.foo,
+	/// 		}))
+	/// 	})
+	/// }
+	/// ```
+	#[cfg(feature = "json")]
+	pub fn force_json<T>(&self) -> Result<T, crate::Response>
+	where
+		T: for<'a> serde::de::Deserialize<'a>,
+	{
+		self.json().map_err(|_| crate::response!(bad_request))
+	}
+
 	/// Get a parsed version of the URL.
 	/// See [Url]
 	pub fn parse_url(&self) -> Url {
