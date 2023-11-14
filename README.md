@@ -115,7 +115,7 @@ Routing can be handled easily using the `Url` struct as seen in `examples/routin
 
 ## **Integration**
 
-Snowboard's `ResponseLike` is designed to work with pretty much anything, but it wont by default with certain cases like `maud`'s `html!` macro _(a `maud` feature was added for this specific ocassion)_. If you happen to use a lot a crate that doesn't work with Snowboard, please open an issue, pr or implement `ResponseLike` for it:
+Snowboard's `ResponseLike` is designed to work with pretty much anything, but it wont by default with certain cases like `maud`'s `html!` macro. If you happen to use a lot a crate that doesn't work with Snowboard, please open an issue, pr or implement `ResponseLike` for it:
 
 ```rust
 use snowboard::{Response, ResponseLike, Server};
