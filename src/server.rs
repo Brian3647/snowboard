@@ -135,6 +135,8 @@ impl Server {
 		#[cfg(feature = "websocket")]
 		let ws_handler = self.ws_handler.clone();
 
+		// Needed for avoiding warning when compiling without the websocket feature.
+		#[allow(unused_mut)]
 		for (mut stream, mut request) in self {
 			async_std::task::spawn(async move {
 				#[cfg(feature = "websocket")]

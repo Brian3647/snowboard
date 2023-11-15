@@ -812,7 +812,7 @@ dependencies = [
 
 [[package]]
 name = "snowboard"
-version = "0.6.3"
+version = "0.7.0"
 dependencies = [
  "async-std",
  "base64",

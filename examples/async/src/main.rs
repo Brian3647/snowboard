@@ -1,4 +1,4 @@
-use snowboard::async_std::task;
+use async_std::task;
 use snowboard::{Request, ResponseLike, Result, Server};
 use std::time::Duration;
 

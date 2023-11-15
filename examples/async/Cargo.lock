@@ -107,6 +107,7 @@ checksum = "b4eb2cdb97421e01129ccb49169d8279ed21e829929144f4a22a6e54ac549ca1"
 name = "async-test"
 version = "0.1.0"
 dependencies = [
+ "async-std",
  "snowboard",
 ]
 
@@ -418,7 +419,7 @@ dependencies = [
 
 [[package]]
 name = "snowboard"
-version = "0.6.3"
+version = "0.7.0"
 dependencies = [
  "async-std",
 ]
