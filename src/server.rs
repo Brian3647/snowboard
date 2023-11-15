@@ -13,6 +13,17 @@ use std::{
 #[cfg(feature = "tls")]
 use native_tls::{TlsAcceptor, TlsStream};
 
+#[cfg(not(feature = "tls"))]
+type Stream = TcpStream;
+
+#[cfg(feature = "tls")]
+type Stream = TlsStream<TcpStream>;
+
+#[cfg(feature = "websocket")]
+use crate::ws::maybe_websocket;
+#[cfg(feature = "websocket")]
+use tungstenite::WebSocket;
+
 #[cfg(feature = "async")]
 use std::future::Future;
 
@@ -22,6 +33,8 @@ pub struct Server {
 	buffer_size: usize,
 	#[cfg(feature = "tls")]
 	tls_acceptor: TlsAcceptor,
+	#[cfg(feature = "websocket")]
+	ws_handler: Option<(&'static str, fn(WebSocket<&mut Stream>))>,
 }
 
 /// Simple rust TCP HTTP server.
@@ -38,6 +51,8 @@ impl Server {
 			#[cfg(feature = "tls")]
 			tls_acceptor: acceptor,
 			buffer_size: DEFAULT_BUFFER_SIZE,
+			#[cfg(feature = "websocket")]
+			ws_handler: None,
 		})
 	}
 
@@ -63,44 +78,8 @@ impl Server {
 		self.buffer_size = size;
 	}
 
-	/// Run a multi-thread listener from a handler function.
-	/// The handler function will be called when a request is received.
-	/// The handler function must return anything that implements
-	/// the `ResponseLike` trait.
-	///
-	/// # Example
-	/// ```rust
-	/// use snowboard::{response, Server};
-	///
-	/// Server::new("localhost:8080").expect("Failed to start server").run(|_| response!(ok));
-	/// ```
-	#[cfg(not(feature = "async"))]
-	pub fn run<T: ResponseLike>(
-		self,
-		handler: impl Fn(Request) -> T + Send + 'static + Clone,
-	) -> ! {
-		for (mut stream, request) in self {
-			let handler = handler.clone();
-
-			std::thread::spawn(move || {
-				if let Err(e) = handler(request).to_response().send_to(&mut stream) {
-					eprintln!("Error writing response: {:#?}", e);
-				};
-			});
-		}
-
-		unreachable!("Server::run() should never return")
-	}
-
-	/// Runs the server asynchronously.
-	///
-	/// This function takes a handler function as an argument. The handler function is expected to be a
-	/// function that takes a `Request` and returns a `Future` that resolves to a `Response`.
-	///
-	/// The handler function is cloned for each request, and each request is processed in a separate
-	/// async task. This means that multiple requests can be processed concurrently.
-	///
-	/// This function is only available when the `async` feature is enabled.
+	/// Set a handler for WebSocket connections.
+	/// The handler function will be called when a WebSocket connection is received.
 	///
 	/// # Example
 	/// ```rust
@@ -108,19 +87,62 @@ impl Server {
 	///
 	/// Server::new("localhost:8080")
 	///     .expect("Failed to start server")
-	///     .run(|_| async { response!(ok) });
-	/// ```
+	///     .on_websocket("/ws", |ws| {
+	///         // Handle the WebSocket connection
+	///     })
+	///    .run(|_| response!(ok)); // Handle HTTP requests
+	///
+	#[cfg(feature = "websocket")]
+	pub fn on_websocket(mut self, path: &'static str, handler: fn(WebSocket<&mut Stream>)) -> Self {
+		self.ws_handler = Some((path, handler));
+		self
+	}
+
+	/// Runs the server synchronously using multiple threads.
+	#[cfg(not(feature = "async"))]
+	pub fn run<T: ResponseLike>(
+		self,
+		handler: impl Fn(Request) -> T + Send + 'static + Clone,
+	) -> ! {
+		#[cfg(feature = "websocket")]
+		let ws_handler = self.ws_handler.clone();
+
+		// Needed for avoiding warning when compiling without the websocket feature.
+		#[allow(unused_mut)]
+		for (mut stream, mut request) in self {
+			let handler = handler.clone();
+
+			std::thread::spawn(move || {
+				#[cfg(feature = "websocket")]
+				if maybe_websocket(ws_handler, &mut stream, &mut request) {
+					return Ok(());
+				};
+
+				handler(request).to_response().send_to(&mut stream)
+			});
+		}
+
+		unreachable!("Server::run() should never return")
+	}
+
+	/// Runs the server asynchronously using multiple threads.
 	#[cfg(feature = "async")]
 	pub fn run<F, T>(self, handler: fn(Request) -> F) -> !
 	where
 		F: Future<Output = T> + Send + 'static,
 		T: ResponseLike,
 	{
-		for (mut stream, request) in self {
+		#[cfg(feature = "websocket")]
+		let ws_handler = self.ws_handler.clone();
+
+		for (mut stream, mut request) in self {
 			async_std::task::spawn(async move {
-				if let Err(e) = handler(request).await.to_response().send_to(&mut stream) {
-					eprintln!("Error writing response: {:#?}", e);
+				#[cfg(feature = "websocket")]
+				if maybe_websocket(ws_handler, &mut stream, &mut request) {
+					return Ok(());
 				};
+
+				handler(request).await.to_response().send_to(&mut stream)
 			});
 		}
 
@@ -129,12 +151,6 @@ impl Server {
 }
 
 // This is a workaround to avoid having to copy documentation.
-
-#[cfg(not(feature = "tls"))]
-type Stream = TcpStream;
-
-#[cfg(feature = "tls")]
-type Stream = TlsStream<TcpStream>;
 
 impl Server {
 	/// Try to accept a new incoming request safely.

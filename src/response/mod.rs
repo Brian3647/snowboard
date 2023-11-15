@@ -1,4 +1,3 @@
-mod macros;
 mod response_types;
 mod traits;
 
