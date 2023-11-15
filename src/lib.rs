@@ -9,16 +9,14 @@ mod url;
 mod util;
 
 pub use request::Request;
-pub use response::{Response, ResponseLike, DEFAULT_HTTP_VERSION};
+pub use response::{Headers, Response, ResponseLike, DEFAULT_HTTP_VERSION};
 pub use server::{Server, DEFAULT_BUFFER_SIZE};
 pub use url::Url;
 pub use util::{HttpVersion, Method};
 
-#[cfg(feature = "async")]
-pub use async_std;
-
 #[cfg(feature = "tls")]
-pub use native_tls;
+// Re-export needed structs for `Server::new(...)` with TLS.
+pub use native_tls::{Identity, TlsAcceptor};
 
 /// A type alias for `std::io::Result<()>`
 /// used in `Server::new()?.run(...)`.

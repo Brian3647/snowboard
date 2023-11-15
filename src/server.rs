@@ -29,23 +29,13 @@ impl Server {
 	/// Create a new server instance.
 	/// The server will listen on the given address.
 	/// The address must be in the format of `ip:port`.
-	#[cfg(not(feature = "tls"))]
-	pub fn new(addr: impl ToSocketAddrs) -> io::Result<Self> {
+	pub fn new(
+		addr: impl ToSocketAddrs,
+		#[cfg(feature = "tls")] acceptor: TlsAcceptor,
+	) -> io::Result<Self> {
 		Ok(Self {
 			acceptor: TcpListener::bind(addr)?,
-			buffer_size: DEFAULT_BUFFER_SIZE,
-		})
-	}
-
-	/// Create a new server instance with TLS support, based on
-	/// a given TLS acceptor and adress.
-	///
-	/// The server will listen on the given address.
-	/// The address must be in the format of `ip:port`.
-	#[cfg(feature = "tls")]
-	pub fn new(addr: impl ToSocketAddrs, acceptor: TlsAcceptor) -> io::Result<Self> {
-		Ok(Self {
-			acceptor: TcpListener::bind(addr)?,
+			#[cfg(feature = "tls")]
 			tls_acceptor: acceptor,
 			buffer_size: DEFAULT_BUFFER_SIZE,
 		})
