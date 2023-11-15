@@ -106,8 +106,28 @@ More info can be found in `examples/tls`.
 
 ## **Websockets**
 
-Even though websocket isn't supported by default, you can install `tungstenite` and use it without much effort.
-Check `examples/websocket` for an example.
+WebSockets are easy to implement with the `websocket` feature. Example (echo server):
+
+```rust
+use std::net::TcpStream;
+
+use snowboard::Server;
+use snowboard::WebSocket;
+
+fn handle_ws(mut ws: WebSocket<&mut TcpStream>) {
+	while let Ok(msg) = ws.read() {
+		ws.send(msg).unwrap();
+	}
+}
+
+fn main() -> snowboard::Result {
+	Server::new("localhost:3000")?
+		.on_websocket("/ws", handle_ws)
+		.run(|_| "Try `/ws`!")
+}
+```
+
+_note: `WebSocket<&mut TcpStream>` becomes `WebSocket<&mut TlsStream<TcpStream>>` with the `tls` feature enabled (see `examples/tls`)._
 
 ## **Routing**
 

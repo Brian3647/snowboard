@@ -72,10 +72,9 @@ pub fn maybe_websocket<Stream: io::Write>(
 		_ => return false,
 	};
 
-	match req.upgrade(stream) {
-		Some(ws) => handler(ws),
-		_ => (),
-	};
+	if let Some(ws) = req.upgrade(stream) {
+		handler(ws);
+	}
 
 	true
 }

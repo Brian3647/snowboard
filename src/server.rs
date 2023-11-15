@@ -243,7 +243,12 @@ impl Iterator for Server {
 			// Parsing the request failed (probably due to it being empty), so we ignore it.
 			Ok((_, Err(_))) => self.next(),
 			// Probably unsupported error caused by TLS handshake failure, ignoring it.
-			Err(e) if e.kind() == io::ErrorKind::ConnectionAborted => self.next(),
+			Err(e)
+				if e.kind() == io::ErrorKind::ConnectionAborted
+					|| e.kind() == io::ErrorKind::ConnectionReset =>
+			{
+				self.next()
+			}
 			Err(e) => {
 				eprintln!("Server generated error: {:#?}", e);
 				None
