@@ -101,7 +101,7 @@ Use the `tls` feature (which will also install `native-tls`) to change the `Serv
 ```rust
 use anyhow::Result;
 use snowboard::{
-    native_tls::{Identity, TlsAcceptor},
+    Identity, TlsAcceptor,
     response, Server,
 };
 
