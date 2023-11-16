@@ -16,4 +16,4 @@ consider getting one generated with a password generator.
 
 ## WebSockets
 
-As implemented, websockets also work with TLS. You can test it with `websocat` by running `websocat wss://localhost:3000/ws --insecure`. _(`--insecure` is needed to allow self-signed certificates, probably not needed in your production environment)_
+As implemented, websockets also work with TLS. You can test it with `websocat` by running `websocat ws://localhost:3000/ws --insecure`. _(`--insecure` is needed to allow self-signed certificates, probably not needed in your production environment)_
