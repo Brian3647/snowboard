@@ -163,6 +163,10 @@ Snowboard is designed and created for people who like coding their own things fr
 This library does not implement what most server libraries have, like an advanced routing system,
 but rather offers a set of essential tools to create a powerful web server.
 
+## **MSRV (Minimum Supported Rust Version)**
+
+The MSRV is 1.60.0, but it might change (lower or higher) depending on which features are enabled.
+
 ## **Contributing**
 
 Check [CONTRIBUTING.md](CONTRIBUTING.md) for a simple guide on how to help the project.
