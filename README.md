@@ -10,6 +10,23 @@ An extremely simple library for fast HTTP & HTTPS servers in Rust
 
 \[[Request a feature/Report a bug](https://github.com/Brian3647/snowboard/issues)\]
 
+<details>
+<summary>Table of Contents</summary>
+
+1. [**Snowboard 🏂**](#snowboard-)
+    1. [**Quick start**](#quick-start)
+    2. [**Async routes**](#async-routes)
+    3. [**TLS**](#tls)
+    4. [**Websockets**](#websockets)
+    5. [**Routing**](#routing)
+    6. [**Integration**](#integration)
+    7. [**Why should I use this?**](#why-should-i-use-this)
+    8. [**MSRV (Minimum Supported Rust Version)**](#msrv-minimum-supported-rust-version)
+    9. [**Contributing**](#contributing)
+    10. [**License**](#license)
+
+</details>
+
 ## **Quick start**
 
 To get started with Snowboard, simply add it to your `Cargo.toml` file:
