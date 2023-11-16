@@ -42,14 +42,15 @@ impl ResponseLike for Vec<u8> {
 }
 
 // Particuraly useful for `?` operators when using outside functions.
-impl<T> ResponseLike for Result<T, Response>
+impl<T, E> ResponseLike for Result<T, E>
 where
 	T: ResponseLike,
+	E: ResponseLike,
 {
 	fn to_response(self) -> Response {
 		match self {
 			Ok(res) => res.to_response(),
-			Err(res) => res,
+			Err(res) => res.to_response(),
 		}
 	}
 }
