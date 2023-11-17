@@ -26,32 +26,29 @@ pub struct Request {
 impl Request {
 	/// Parses and creates a requeset from raw text and an ip address.
 	/// Note that this does not parse the url (See [Request::url]).
-	pub fn new(text: impl ToString, ip: SocketAddr) -> Option<Self> {
-		let text = text.to_string();
-		let mut lines = text.lines();
+	pub fn new(bytes: Vec<u8>, ip: SocketAddr) -> Option<Self> {
+		let mut lines = bytes.split(|&byte| byte == b'\n');
 
-		let first_line = lines.next()?;
+		let first_line = String::from_utf8(lines.next()?.to_vec()).ok()?;
 		let mut parts = first_line.split_whitespace();
 
 		let method = Method::from(parts.next()?);
 		let url = parts.next()?.into();
 
-		// Default capacity for headers is 12, but it will grow autoamtically if needed.
+		// Default capacity for headers is 12, but it will grow automatically if needed.
 		let mut headers = HashMap::with_capacity(12);
 
 		let mut in_body = false;
-		let mut body = Vec::default();
+		let mut body = Vec::new();
 
 		for line in lines {
 			match (in_body, line.is_empty()) {
 				(false, true) => in_body = true,
-				(true, _) => body.extend_from_slice(line.as_bytes()),
+				(true, _) => body.extend_from_slice(line),
 				_ => {
-					let parts = line.split_once(':')?;
-					let key = parts.0.into();
-					let value = parts.1.trim().into();
-
-					headers.insert(key, value);
+					if let Some((key, value)) = Self::parse_header(line) {
+						headers.insert(key, value);
+					}
 				}
 			}
 		}
@@ -63,6 +60,17 @@ impl Request {
 			body,
 			headers,
 		})
+	}
+
+	fn parse_header(line: &[u8]) -> Option<(String, String)> {
+		let pos = line.iter().position(|&byte| byte == b':')?;
+		let (key, rest) = line.split_at(pos);
+		let value = &rest[1..];
+
+		Some((
+			String::from_utf8_lossy(key).trim().to_string(),
+			String::from_utf8_lossy(value).trim().to_string(),
+		))
 	}
 
 	/// Safely gets a header.

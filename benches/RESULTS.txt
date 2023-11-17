@@ -1,0 +1,18 @@
+NOTE: This are results on **MY** pc, which WILL be different on different PCs.
+This file only exists to compare, and not to be used as definitive results.
+
+PC specs:
+
+distro ⏹ Arch Linux (x86_64)
+kernel ⏹ 6.6.1-arch1-1
+memory ⏹ 8GB
+cpu ⏹ AMD Ryzen 5 2600 Six-Core Processor
+
+---------------
+
+REQUEST PARSING
+Current: 285ns
+W/String::from_utf8_unchecked: 278.84ns (+ `bytes` cloning in bench)
+W/Custom byte slicing + utf8 on specific places: 284.12 (+ `bytes` cloning in bench)
+
+7ns difference (7 * 10^-9) seconds between the 2 new options, which are still faster than the current one.

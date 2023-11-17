@@ -175,19 +175,19 @@ impl Server {
 	/// }
 	/// ```
 	#[inline]
-	pub fn try_accept(&self) -> io::Result<(Stream, Result<Request, String>)> {
+	pub fn try_accept(&self) -> io::Result<(Stream, Request)> {
 		self.try_accept_inner()
 	}
 
 	#[cfg(not(feature = "tls"))]
 	#[inline]
-	fn try_accept_inner(&self) -> io::Result<(Stream, Result<Request, String>)> {
+	fn try_accept_inner(&self) -> io::Result<(Stream, Request)> {
 		let (stream, ip) = self.acceptor.accept()?;
 		self.handle_request(stream, ip)
 	}
 
 	#[cfg(feature = "tls")]
-	fn try_accept_inner(&self) -> io::Result<(Stream, Result<Request, String>)> {
+	fn try_accept_inner(&self) -> io::Result<(Stream, Request)> {
 		let (mut tcp_stream, ip) = self.acceptor.accept()?;
 		match self.tls_acceptor.accept(tcp_stream.try_clone()?) {
 			Ok(tls_stream) => self.handle_request(tls_stream, ip),
@@ -209,7 +209,7 @@ impl Server {
 		&self,
 		mut stream: T,
 		ip: SocketAddr,
-	) -> io::Result<(T, Result<Request, String>)> {
+	) -> io::Result<(T, Request)> {
 		let mut buffer: Vec<u8> = vec![0; self.buffer_size];
 		let payload_size = stream.read(&mut buffer)?;
 
@@ -226,10 +226,9 @@ impl Server {
 			return Err(io::Error::new(io::ErrorKind::InvalidInput, "Empty request"));
 		}
 
-		let text = String::from_utf8_lossy(&buffer).replace('\0', "");
-		let req = match Request::new(&text, ip) {
-			Some(req) => Ok(req),
-			None => Err(text),
+		let req = match Request::new(buffer, ip) {
+			Some(req) => req,
+			None => return Err(io::Error::from(io::ErrorKind::InvalidInput)),
 		};
 
 		Ok((stream, req))
@@ -241,13 +240,12 @@ impl Iterator for Server {
 
 	fn next(&mut self) -> Option<Self::Item> {
 		match self.try_accept() {
-			Ok((stream, Ok(req))) => Some((stream, req)),
-			// Parsing the request failed (probably due to it being empty), so we ignore it.
-			Ok((_, Err(_))) => self.next(),
-			// Probably unsupported error caused by TLS handshake failure, ignoring it.
+			Ok(r) => Some(r),
+			// TLS errors, parse requests and cancelled connections are ignored.
 			Err(e)
 				if e.kind() == io::ErrorKind::ConnectionAborted
-					|| e.kind() == io::ErrorKind::ConnectionReset =>
+					|| e.kind() == io::ErrorKind::ConnectionReset
+					|| e.kind() == io::ErrorKind::InvalidInput =>
 			{
 				self.next()
 			}
