@@ -42,6 +42,10 @@ impl<'a> From<&'a str> for Url<'a> {
 		if !query_part.is_empty() {
 			for s in query_part.split('&') {
 				let (key, value) = s.split_once('=').unwrap_or((s, ""));
+				if key.is_empty() {
+					continue;
+				}
+
 				search_params.insert(key, value);
 			}
 		}

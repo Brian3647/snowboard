@@ -10,9 +10,19 @@ cpu ⏹ AMD Ryzen 5 2600 Six-Core Processor
 
 ---------------
 
-REQUEST PARSING
+REQUEST PARSING (Fri Nov 17 06:25:00 PM CET 2023)
 Current: 285ns
 W/String::from_utf8_unchecked: 278.84ns (+ `bytes` cloning in bench)
 W/Custom byte slicing + utf8 on specific places: 284.12 (+ `bytes` cloning in bench)
 
 7ns difference (7 * 10^-9) seconds between the 2 new options, which are still faster than the current one.
+
+---------------
+
+URL PARSING (Fri Nov 17 06:40:43 PM CET 2023)
+
+Parsing urls is a bit slower than expected, probably due to splitting by `/`, `?`, `&` and `=`.
+
+Complex url tested: /path/to/something?param1=value1&param2=value2&param3=value3&s=& - ~400ns (0.4µs)
+Simple url tested: /a/b?c=d - ~140ns
+Base url tested: / - ~30ns
