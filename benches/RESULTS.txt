@@ -1,6 +1,11 @@
 NOTE: This are results on **MY** pc, which WILL be different on different PCs.
 This file only exists to compare, and not to be used as definitive results.
 
+NOTE: Also, this wasn't executed on proper benching setups. I was listening to music,
+had a few tabs open, was running a few other programs and had a few other things running in the background.
+
+Do NOT take these results as trustable.
+
 PC specs:
 
 distro ⏹ Arch Linux (x86_64)
