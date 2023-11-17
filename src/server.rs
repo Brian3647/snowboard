@@ -20,9 +20,7 @@ type Stream = TcpStream;
 type Stream = TlsStream<TcpStream>;
 
 #[cfg(feature = "websocket")]
-use crate::ws::maybe_websocket;
-#[cfg(feature = "websocket")]
-use tungstenite::WebSocket;
+use crate::ws::{maybe_websocket, WebSocket};
 
 #[cfg(feature = "async")]
 use std::future::Future;
@@ -246,8 +244,9 @@ impl Iterator for Server {
 				self.next()
 			}
 			Err(e) => {
+				// Probably an important error.
 				eprintln!("Server generated error: {:#?}", e);
-				None
+				self.next() // Continue anyways. We don't want to stop the server at production.
 			}
 		}
 	}

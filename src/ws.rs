@@ -8,7 +8,7 @@ use base64::engine::general_purpose::STANDARD as BASE64ENGINE;
 use base64::Engine;
 
 use sha1::{Digest, Sha1};
-use tungstenite::WebSocket;
+pub(crate) use tungstenite::WebSocket;
 
 /// Builds the handshake headers for a WebSocket connection.
 fn build_handshake(sec_key: String) -> HashMap<&'static str, String> {
