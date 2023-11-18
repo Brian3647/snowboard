@@ -3,7 +3,7 @@ use snowboard::{headers, response, Method, Result, Server};
 fn main() -> Result {
 	let server = Server::new("localhost:8080")?;
 
-	println!("Listening on {}", server.formatted_addr().unwrap());
+	println!("Listening on {}", server.pretty_addr().unwrap());
 
 	server.run(move |mut req| {
 		if req.method != Method::GET {

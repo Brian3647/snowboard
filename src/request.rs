@@ -143,4 +143,9 @@ impl Request {
 	pub fn parse_url(&self) -> Url {
 		self.url.as_str().into()
 	}
+
+	/// Get the IP address of the client as a link.
+	pub fn ip(&self) -> String {
+		crate::Server::format_addr(self.ip)
+	}
 }

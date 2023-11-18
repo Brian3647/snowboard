@@ -60,10 +60,15 @@ impl Server {
 		self.acceptor.local_addr()
 	}
 
-	/// Formats the socket address into something usable in the
-	/// `Location` header.
-	pub fn formatted_addr(&self) -> io::Result<String> {
-		Ok(match self.addr()? {
+	/// Get the address the server is listening on as a string,
+	/// formatted to be able to use it as a link.
+	pub fn pretty_addr(&self) -> io::Result<String> {
+		Ok(Self::format_addr(self.addr()?))
+	}
+
+	/// Formats a socket address into something usable.
+	pub fn format_addr(addr: SocketAddr) -> String {
+		match addr {
 			SocketAddr::V4(v4) => {
 				if v4.ip().is_loopback() {
 					format!("localhost:{}", v4.port())
@@ -78,7 +83,7 @@ impl Server {
 					format!("{}:{}", v6.ip(), v6.port())
 				}
 			}
-		})
+		}
 	}
 
 	/// Set the buffer size used to read incoming requests.
@@ -203,19 +208,28 @@ impl Server {
 
 	#[cfg(feature = "tls")]
 	fn try_accept_inner(&self) -> io::Result<(Stream, Request)> {
-		let (mut tcp_stream, ip) = self.acceptor.accept()?;
-		match self.tls_acceptor.accept(tcp_stream.try_clone()?) {
-			Ok(tls_stream) => self.handle_request(tls_stream, ip),
-			Err(_) => {
-				crate::response!(
-					upgrade_required,
-					"HTTP is not supported. Use HTTPS instead."
-				)
-				.send_to(&mut tcp_stream)?;
+		// Using `tls_acceptor` directly consumes the first 4 bytes of the stream,
+		// making redirects hard (and maybe impossible) to implement. `native_tls` uses
+		// different implementations (even externally) for `TlsAcceptor`, so the only
+		// safe way is this.
 
-				// Continue to the next connection
-				Err(io::Error::from(io::ErrorKind::ConnectionAborted))
+		let (mut tcp_stream, ip) = self.acceptor.accept()?;
+		let mut buffer = [0; 2];
+		tcp_stream.peek(&mut buffer)?;
+
+		if buffer == [0x16, 0x03] {
+			// This looks like a TLS handshake.
+			match self.tls_acceptor.accept(tcp_stream) {
+				Ok(tls_stream) => self.handle_request(tls_stream, ip),
+				Err(_) => {
+					// Continue to the next connection
+					Err(io::Error::from(io::ErrorKind::ConnectionAborted))
+				}
 			}
+		} else {
+			// This doesn't look like a TLS handshake. Handle it as a non-TLS request.
+			self.handle_not_tls(&mut tcp_stream)?;
+			Err(io::Error::from(io::ErrorKind::ConnectionAborted))
 		}
 	}
 
@@ -250,6 +264,47 @@ impl Server {
 		};
 
 		Ok((stream, req))
+	}
+
+	// Extremely simple HTTP to HTTPS redirect.
+	#[cfg(feature = "tls")]
+	fn handle_not_tls<T: io::Read + io::Write>(&self, mut stream: T) -> io::Result<()> {
+		let mut buffer: Vec<u8> = vec![0; self.buffer_size];
+
+		stream.read(&mut buffer)?;
+
+		let mut path = vec![];
+		let mut in_path = false;
+
+		for byte in buffer.iter() {
+			if *byte == b' ' {
+				if in_path {
+					break;
+				} else {
+					in_path = true;
+					continue;
+				}
+			}
+
+			if in_path {
+				path.push(*byte);
+			}
+		}
+
+		let path = String::from_utf8_lossy(&path).to_string();
+
+		crate::response!(
+			moved_permanently,
+			[],
+			crate::headers! {
+				"Location" => format!("https://{}{}", self.pretty_addr().unwrap_or_default(), path),
+				"Connection" => "keep-alive",
+				"Content-Length" => 0
+			}
+		)
+		.send_to(&mut stream)?;
+
+		Ok(())
 	}
 }
 
