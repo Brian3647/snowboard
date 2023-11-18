@@ -60,6 +60,27 @@ impl Server {
 		self.acceptor.local_addr()
 	}
 
+	/// Formats the socket address into something usable in the
+	/// `Location` header.
+	pub fn formatted_addr(&self) -> io::Result<String> {
+		Ok(match self.addr()? {
+			SocketAddr::V4(v4) => {
+				if v4.ip().is_loopback() {
+					format!("localhost:{}", v4.port())
+				} else {
+					v4.to_string()
+				}
+			}
+			SocketAddr::V6(v6) => {
+				if v6.ip().is_loopback() {
+					format!("localhost:{}", v6.port())
+				} else {
+					format!("{}:{}", v6.ip(), v6.port())
+				}
+			}
+		})
+	}
+
 	/// Set the buffer size used to read incoming requests.
 	/// The default buffer size is 8KiB.
 	///
@@ -186,7 +207,6 @@ impl Server {
 		match self.tls_acceptor.accept(tcp_stream.try_clone()?) {
 			Ok(tls_stream) => self.handle_request(tls_stream, ip),
 			Err(_) => {
-				// Write a 426 Upgrade Required response to the stream
 				crate::response!(
 					upgrade_required,
 					"HTTP is not supported. Use HTTPS instead."
@@ -218,6 +238,10 @@ impl Server {
 		if payload_size == 0 {
 			crate::response!(bad_request).send_to(&mut stream)?;
 			return Err(io::Error::new(io::ErrorKind::InvalidInput, "Empty request"));
+		}
+
+		if let Some(end) = buffer.iter().position(|&x| x == 0) {
+			buffer.truncate(end);
 		}
 
 		let req = match Request::new(buffer, ip) {
