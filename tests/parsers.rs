@@ -1,16 +1,17 @@
-use std::collections::HashMap;
-
-use snowboard::{Method, Request, Url};
-
+#[macro_export]
 macro_rules! map_into {
 	($($name:expr => $val:expr $(,)?)*) => {
 		{
-			let mut map = ::std::collections::HashMap::new();
+			let mut map = HashMap::new();
 			$(map.insert($name.into(), $val.into());)*
 			map
 		}
 	};
 }
+
+use std::collections::HashMap;
+
+use snowboard::{Method, Request, Url};
 
 #[test]
 fn parse_request() {
