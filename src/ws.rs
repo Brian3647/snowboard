@@ -1,5 +1,3 @@
-//! Basic websocket support using the `tungstenite` crate.
-
 use std::{collections::HashMap, io};
 
 use crate::{headers, Request};

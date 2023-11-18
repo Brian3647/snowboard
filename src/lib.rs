@@ -10,7 +10,7 @@ mod url;
 mod util;
 
 #[cfg(feature = "websocket")]
-pub mod ws;
+mod ws;
 
 pub use request::Request;
 pub use response::{Headers, Response, ResponseLike, DEFAULT_HTTP_VERSION};
