@@ -14,13 +14,13 @@ mod ws;
 
 pub use request::Request;
 pub use response::{Headers, Response, ResponseLike, DEFAULT_HTTP_VERSION};
-pub use server::{Server, DEFAULT_BUFFER_SIZE};
+pub use server::{Server, Stream, DEFAULT_BUFFER_SIZE};
 pub use url::Url;
 pub use util::{HttpVersion, Method};
 
 #[cfg(feature = "websocket")]
-// Needed re-export
-pub use tungstenite::WebSocket;
+/// A WebSocket connection.
+pub type WebSocket<'a> = tungstenite::WebSocket<&'a mut Stream>;
 
 #[cfg(feature = "tls")]
 // Re-export needed structs for `Server::new(...)` with TLS.

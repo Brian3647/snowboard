@@ -1,9 +1,7 @@
-use std::net::TcpStream;
-
 use snowboard::Server;
 use snowboard::WebSocket;
 
-fn handle_ws(mut ws: WebSocket<&mut TcpStream>) {
+fn handle_ws(mut ws: WebSocket) {
 	while let Ok(msg) = ws.read() {
 		let _ = ws.send(msg);
 	}

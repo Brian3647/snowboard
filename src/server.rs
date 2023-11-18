@@ -13,11 +13,13 @@ use std::{
 #[cfg(feature = "tls")]
 use native_tls::{TlsAcceptor, TlsStream};
 
+/// A TCP stream
 #[cfg(not(feature = "tls"))]
-type Stream = TcpStream;
+pub type Stream = TcpStream;
 
+/// A TLS stream.
 #[cfg(feature = "tls")]
-type Stream = TlsStream<TcpStream>;
+pub type Stream = TlsStream<TcpStream>;
 
 #[cfg(feature = "websocket")]
 use crate::ws::{maybe_websocket, WebSocket};

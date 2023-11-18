@@ -1,13 +1,12 @@
 use anyhow::Result;
-use snowboard::{Identity, TlsAcceptor, TlsStream};
-use std::net::TcpStream;
+use snowboard::{Identity, TlsAcceptor};
 
 use snowboard::Server;
 use snowboard::WebSocket;
 
 use std::fs;
 
-fn handle_ws(mut ws: WebSocket<&mut TlsStream<TcpStream>>) {
+fn handle_ws(mut ws: WebSocket) {
 	while let Ok(msg) = ws.read() {
 		let _ = ws.send(msg);
 	}
