@@ -42,4 +42,4 @@ name = "main"
 harness = false
 
 [[test]]
-name = "main"
+name = "parsing"
