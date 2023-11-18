@@ -438,7 +438,7 @@ dependencies = [
 
 [[package]]
 name = "snowboard"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "base64",
  "native-tls",
