@@ -5,7 +5,7 @@ use snowboard::WebSocket;
 
 fn handle_ws(mut ws: WebSocket<&mut TcpStream>) {
 	while let Ok(msg) = ws.read() {
-		ws.send(msg).unwrap();
+		let _ = ws.send(msg);
 	}
 }
 

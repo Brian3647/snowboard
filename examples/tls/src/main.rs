@@ -9,7 +9,7 @@ use std::fs;
 
 fn handle_ws(mut ws: WebSocket<&mut TlsStream<TcpStream>>) {
 	while let Ok(msg) = ws.read() {
-		ws.send(msg).unwrap();
+		let _ = ws.send(msg);
 	}
 }
 
