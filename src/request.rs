@@ -41,8 +41,10 @@ impl Request {
 		let mut in_body = false;
 		let mut body = Vec::new();
 
+		dbg!(&lines);
+
 		for line in lines {
-			match (in_body, line.is_empty()) {
+			match (in_body, line == b"\r") {
 				(false, true) => in_body = true,
 				(true, _) => body.extend_from_slice(line),
 				_ => {

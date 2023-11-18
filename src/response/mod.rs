@@ -3,7 +3,7 @@ mod traits;
 
 pub use traits::ResponseLike;
 
-use std::{collections::HashMap, fmt::Display, io};
+use std::{collections::HashMap, fmt, io};
 
 use crate::HttpVersion;
 
@@ -92,8 +92,8 @@ impl Response {
 	}
 }
 
-impl Display for Response {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for Response {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		let mut text = self.prepare_response();
 		text += String::from_utf8_lossy(&self.bytes).as_ref();
 		write!(f, "{}", text)

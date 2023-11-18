@@ -40,3 +40,6 @@ required-features = []
 [[bench]]
 name = "main"
 harness = false
+
+[[test]]
+name = "main"

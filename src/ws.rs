@@ -46,7 +46,7 @@ impl Request {
 		let ws_key = self.headers.get("Sec-WebSocket-Key")?.clone();
 		let handshake = build_handshake(ws_key);
 
-		crate::response!(switching_protocols, "", handshake)
+		crate::response!(switching_protocols, [], handshake)
 			.send_to(&mut stream)
 			.ok()?;
 
@@ -72,9 +72,7 @@ pub fn maybe_websocket<Stream: io::Write>(
 		_ => return false,
 	};
 
-	if let Some(ws) = req.upgrade(stream) {
-		handler(ws);
-	}
-
+	// Calls `handler` if `request.upgrade(..)` returns `Some(..)`.
+	req.upgrade(stream).map(handler);
 	true
 }
