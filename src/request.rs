@@ -41,8 +41,6 @@ impl Request {
 		let mut in_body = false;
 		let mut body = Vec::new();
 
-		dbg!(&lines);
-
 		for line in lines {
 			match (in_body, line == b"\r") {
 				(false, true) => in_body = true,
