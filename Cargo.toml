@@ -27,7 +27,7 @@ criterion = "0.5.1"
 
 [features]
 default = []
-full = ["async", "tls"]
+full = ["async", "tls", "json"]
 async = ["async-std"]
 tls = ["native-tls"]
 json = ["serde_json", "serde"]
