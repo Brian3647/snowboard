@@ -4,8 +4,8 @@ use snowboard::{headers, response, HttpVersion, Response};
 fn response_generation() {
 	let default_res = Response::default();
 
-	assert_eq!(default_res.to_string(), "HTTP/1.1 200 Ok\r\n\r\n");
 	assert_eq!(default_res, response!(ok));
+	assert_eq!(default_res.to_string(), "HTTP/1.1 200 Ok\r\n\r\n");
 
 	let custom = response!(not_found, "Custom body");
 

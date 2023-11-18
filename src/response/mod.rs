@@ -48,11 +48,11 @@ impl Response {
 		}
 	}
 
-	/// Writes the response to a TcpStream.
+	/// Writes the response, consuming its body.
 	pub fn send_to<T: io::Write>(&mut self, stream: &mut T) -> Result<(), io::Error> {
-		let mut first_bytes = self.prepare_response().into_bytes();
-		first_bytes.append(&mut self.bytes);
-		stream.write_all(&first_bytes)?;
+		let prev = self.prepare_response().into_bytes();
+		stream.write_all(&prev)?;
+		stream.write_all(&self.bytes)?;
 		stream.flush()
 	}
 
@@ -74,10 +74,8 @@ impl Response {
 		self.set_header("Content-Type", value)
 	}
 
-	/// Returns the first lines of the generated response.
+	/// Returns the first lines of the generated response. (everything except the body)
 	/// This function is used internally to create the response.
-	/// If you want to get the full response, use `Display` instead.
-	/// Only the body is missing from the response.
 	fn prepare_response(&self) -> String {
 		let mut text = format!("{} {} {}\r\n", self.version, self.status, self.status_text);
 
@@ -89,6 +87,19 @@ impl Response {
 
 		text += "\r\n";
 		text
+	}
+
+	/// Converts the `Response` into a HTTP Response, as bytes.
+	pub fn to_bytes(&mut self) -> Vec<u8> {
+		let mut bytes = self.prepare_response().into_bytes();
+		bytes.append(&mut self.bytes);
+		bytes
+	}
+}
+
+impl From<Response> for Vec<u8> {
+	fn from(mut res: Response) -> Self {
+		res.to_bytes()
 	}
 }
 
