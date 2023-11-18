@@ -39,16 +39,24 @@ pub struct Server {
 impl Server {
 	/// Create a new server instance.
 	/// The server will listen on the given address.
-	/// The address must be in the format of `ip:port`.
-	pub fn new(
-		addr: impl ToSocketAddrs,
-		#[cfg(feature = "tls")] acceptor: TlsAcceptor,
-	) -> io::Result<Self> {
+	#[cfg(not(feature = "tls"))]
+	pub fn new(addr: impl ToSocketAddrs) -> io::Result<Self> {
 		Ok(Self {
 			acceptor: TcpListener::bind(addr)?,
-			#[cfg(feature = "tls")]
-			tls_acceptor: acceptor,
 			buffer_size: DEFAULT_BUFFER_SIZE,
+			#[cfg(feature = "websocket")]
+			ws_handler: None,
+		})
+	}
+
+	/// Create a new server instance with TLS.
+	/// The server will listen on the given address.
+	#[cfg(feature = "tls")]
+	pub fn new_with_tls(addr: impl ToSocketAddrs, tls_acceptor: TlsAcceptor) -> io::Result<Self> {
+		Ok(Self {
+			acceptor: TcpListener::bind(addr)?,
+			buffer_size: DEFAULT_BUFFER_SIZE,
+			tls_acceptor,
 			#[cfg(feature = "websocket")]
 			ws_handler: None,
 		})
@@ -123,7 +131,6 @@ impl Server {
 	}
 
 	/// Runs the server synchronously using multiple threads.
-	#[cfg(not(feature = "async"))]
 	pub fn run<T: ResponseLike>(
 		self,
 		handler: impl Fn(Request) -> T + Send + 'static + Clone,
@@ -151,7 +158,7 @@ impl Server {
 
 	/// Runs the server asynchronously using multiple threads.
 	#[cfg(feature = "async")]
-	pub fn run<F, T>(self, handler: fn(Request) -> F) -> !
+	pub fn run_async<F, T>(self, handler: fn(Request) -> F) -> !
 	where
 		F: Future<Output = T> + Send + 'static,
 		T: ResponseLike,

@@ -66,7 +66,7 @@ And that's it! You got yourself a working server on :8080. Examples can be found
 
 ## **Async routes**
 
-You can use the `async` feature to change `Server::run(..)` so that it supports asynchronous handlers:
+You can use the `async` feature and `Server::run_async` to run async routes:
 
 ```toml
 # Cargo.toml
@@ -90,13 +90,13 @@ async fn index(_: Request) -> impl ResponseLike {
 }
 
 fn main() -> Result {
-    Server::new("localhost:8080")?.run(index);
+    Server::new("localhost:8080")?.run_async(index);
 }
 ```
 
 ## **TLS**
 
-Use the `tls` feature (which will also install `native-tls`) to change the `Server` struct, adding support for TLS:
+Use the `tls` feature (which will also install `native-tls`) to use TLS:
 
 ```rust
 use anyhow::Result;
@@ -112,7 +112,7 @@ fn main() -> Result<()> {
     let password = ..;
     let tls_acceptor = TlsAcceptor::new(Identity::from_pkcs12(&der, password)?)?;
 
-    Server::new("localhost:3000", tls_acceptor)?
+    Server::new_with_tls("localhost:3000", tls_acceptor)?
         .run(|request| format!("{request:#?}"))
 }
 ```

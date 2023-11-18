@@ -18,7 +18,7 @@ fn main() -> Result<()> {
 	let password = "1234";
 	let tls_acceptor = TlsAcceptor::new(Identity::from_pkcs12(&der, password)?)?;
 
-	Server::new("localhost:3000", tls_acceptor)?
+	Server::new_with_tls("localhost:3000", tls_acceptor)?
 		.on_websocket("/ws", handle_ws)
 		.run(|request| format!("{request:#?}"))
 }
