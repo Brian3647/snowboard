@@ -37,7 +37,12 @@ impl ResponseLike for String {
 impl ResponseLike for Vec<u8> {
 	#[inline]
 	fn to_response(self) -> Response {
-		crate::response!(ok, self)
+		let len = self.len();
+		crate::response!(
+			ok,
+			self,
+			crate::headers! { "Content-Length" => len, "Content-Type" => "application/octet-stream" }
+		)
 	}
 }
 
@@ -59,6 +64,16 @@ where
 impl ResponseLike for serde_json::Value {
 	#[inline]
 	fn to_response(self) -> Response {
-		crate::response!(ok, self.to_string())
+		let string = self.to_string();
+		let len = string.len();
+
+		crate::response!(
+			ok,
+			string,
+			crate::headers! {
+				"Content-Type" => "application/json",
+				"Content-Length" => len
+			}
+		)
 	}
 }
