@@ -23,14 +23,20 @@ impl ResponseLike for () {
 impl ResponseLike for &str {
 	#[inline]
 	fn to_response(self) -> Response {
-		crate::response!(ok, self)
+		let len = self.len();
+		crate::response!(ok, self, crate::headers! { "Content-Length" => len })
 	}
 }
 
 impl ResponseLike for String {
 	#[inline]
 	fn to_response(self) -> Response {
-		crate::response!(ok, self)
+		let len = self.len();
+		crate::response!(
+			ok,
+			self,
+			crate::headers! { "Content-Length" => len, "Content-Type" => "text/plain" }
+		)
 	}
 }
 
