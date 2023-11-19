@@ -8,7 +8,7 @@
 [![DeepSource](https://app.deepsource.com/gh/Brian3647/snowboard.svg/?label=active+issues&show_trend=false)](https://app.deepsource.com/gh/Brian3647/snowboard/)
 [![dependency status](https://deps.rs/repo/github/Brian3647/snowboard/status.svg)](https://deps.rs/repo/github/Brian3647/snowboard)
 
-An extremely simple (& blazingly fast) library for fast HTTP & HTTPS servers in Rust
+An extremely simple (& blazingly fast) library for HTTP & HTTPS servers in Rust
 
 [Request a feature/Report a bug](https://github.com/Brian3647/snowboard/issues)
 
