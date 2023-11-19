@@ -1,4 +1,3 @@
-#[macro_export]
 macro_rules! map_into {
 	($($name:expr => $val:expr $(,)?)*) => {
 		{
@@ -33,6 +32,36 @@ fn parse_request() {
 			}
 		}
 	);
+}
+
+#[test]
+fn parse_invalid_utf8() {
+	let mut request = b"GET / HTTP/1.1\r\nX-A: B\r\n\r\n".to_vec();
+
+	// Invalid UTF-8 bytes
+	request.push(0x80);
+	request.push(0xFF);
+	request.push(0xC0);
+
+	let sample_ip = "127.0.0.1:8080".parse().unwrap();
+
+	let parsed = Request::new(request, sample_ip).unwrap();
+
+	assert_eq!(
+		parsed,
+		Request {
+			ip: sample_ip,
+			url: "/".into(),
+			method: Method::GET,
+			body: vec![0x80, 0xFF, 0xC0],
+			headers: map_into! {
+				"X-A" => "B",
+			}
+		}
+	);
+
+	// Invalid UTF-8 bytes get converted to the replacement character (�)
+	assert_eq!(parsed.text(), "���")
 }
 
 #[test]

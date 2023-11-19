@@ -89,7 +89,7 @@ impl Request {
 	}
 
 	/// Gets the body as a string.
-	/// See [std::string::String::from_utf8]
+	/// See [`String::from_utf8_lossy`]
 	pub fn text(&self) -> Cow<'_, str> {
 		String::from_utf8_lossy(&self.body)
 	}
