@@ -70,7 +70,7 @@ where
 impl ResponseLike for serde_json::Value {
 	#[inline]
 	fn to_response(self) -> Response {
-		let bytes = serde_json::to_vec(&self).unwrap_or(self.to_string().into_bytes());
+		let bytes = serde_json::to_vec(&self).unwrap_or_else(|_| self.to_string().into_bytes());
 		let len = bytes.len();
 
 		crate::response!(
