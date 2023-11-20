@@ -1,3 +1,5 @@
+<div align="center">
+
 # **Snowboard 🏂**
 
 ![License](https://img.shields.io/github/license/Brian3647/snowboard)
@@ -6,9 +8,11 @@
 [![DeepSource](https://app.deepsource.com/gh/Brian3647/snowboard.svg/?label=active+issues&show_trend=false)](https://app.deepsource.com/gh/Brian3647/snowboard/)
 [![dependency status](https://deps.rs/repo/github/Brian3647/snowboard/status.svg)](https://deps.rs/repo/github/Brian3647/snowboard)
 
-An extremely simple (& blazingly fast) library for fast HTTP & HTTPS servers in Rust
+An extremely simple (& blazingly fast) library for HTTP & HTTPS servers in Rust
 
-\[[Request a feature/Report a bug](https://github.com/Brian3647/snowboard/issues)\]
+[Request a feature/Report a bug](https://github.com/Brian3647/snowboard/issues)
+
+</div>
 
 <details>
 <summary>Table of Contents</summary>
@@ -20,10 +24,9 @@ An extremely simple (& blazingly fast) library for fast HTTP & HTTPS servers in 
     4. [**Websockets**](#websockets)
     5. [**Routing**](#routing)
     6. [**Integration**](#integration)
-    7. [**Why should I use this?**](#why-should-i-use-this)
-    8. [**MSRV (Minimum Supported Rust Version)**](#msrv-minimum-supported-rust-version)
-    9. [**Contributing**](#contributing)
-    10. [**License**](#license)
+    7. [**MSRV (Minimum Supported Rust Version)**](#msrv-minimum-supported-rust-version)
+    8. [**Contributing**](#contributing)
+    9. [**License**](#license)
 
 </details>
 
@@ -88,7 +91,7 @@ async fn index(_: Request) -> impl ResponseLike {
 }
 
 fn main() -> Result {
-    Server::new("localhost:8080")?.run_async(index);
+    Server::new("localhost:8080")?.run_async(index)
 }
 ```
 
@@ -115,7 +118,7 @@ fn main() -> Result<()> {
 }
 ```
 
-You can confirm it works by running `curl -k localhost:3000` _(the -k is needed to allow self-signed certificates)_
+You can confirm it works by running `curl -k https://localhost:3000` _(the -k is needed to allow self-signed certificates)_
 
 More info can be found in `examples/tls`.
 
@@ -144,7 +147,25 @@ fn main() -> snowboard::Result {
 
 ## **Routing**
 
-Routing can be handled easily using the `Url` struct as seen in `examples/routing.rs`.
+Routing can be handled easily using the `Url` struct:
+
+```rs
+use snowboard::{response, Request, ResponseLike, Result, Server};
+
+fn router(req: Request) -> impl ResponseLike {
+    // /{x}
+    match req.parse_url().at(0) {
+        Some("ping") => response!(ok, "Pong!"),
+        Some("api") => response!(not_implemented, "👀"),
+        None => response!(ok, "Hello, world!"),
+        _ => response!(not_found, "Route not found"),
+    }
+}
+
+fn main() -> Result {
+    Server::new("localhost:8080")?.run(router);
+}
+```
 
 ## **Integration**
 
@@ -164,17 +185,10 @@ impl ResponseLike for Example {
 }
 
 fn main() -> snowboard::Result {
-    Server::new("localhost:8080")
-        .unwrap()
+    Server::new("localhost:8080")?
         .run(|_| Example { num: 5 });
 }
 ```
-
-## **Why should I use this?**
-
-Snowboard is designed and created for people who like coding their own things from little to nothing, like me.
-This library does not implement what most server libraries have, like an advanced routing system,
-but rather offers a set of essential tools to create a powerful web server.
 
 ## **MSRV (Minimum Supported Rust Version)**
 
