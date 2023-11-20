@@ -89,7 +89,7 @@ async fn index(_: Request) -> impl ResponseLike {
 }
 
 fn main() -> Result {
-    Server::new("localhost:8080")?.run_async(index);
+    Server::new("localhost:8080")?.run_async(index)
 }
 ```
 
