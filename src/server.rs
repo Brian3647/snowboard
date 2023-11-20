@@ -73,27 +73,7 @@ impl Server {
 	/// Get the address the server is listening on as a string,
 	/// formatted to be able to use it as a link.
 	pub fn pretty_addr(&self) -> io::Result<String> {
-		Ok(Self::format_addr(self.addr()?))
-	}
-
-	/// Formats a socket address into something usable.
-	pub fn format_addr(addr: SocketAddr) -> String {
-		match addr {
-			SocketAddr::V4(v4) => {
-				if v4.ip().is_loopback() {
-					format!("localhost:{}", v4.port())
-				} else {
-					v4.to_string()
-				}
-			}
-			SocketAddr::V6(v6) => {
-				if v6.ip().is_loopback() {
-					format!("localhost:{}", v6.port())
-				} else {
-					format!("{}:{}", v6.ip(), v6.port())
-				}
-			}
-		}
+		self.addr().map(crate::util::format_addr)
 	}
 
 	/// Set the buffer size used to read incoming requests.

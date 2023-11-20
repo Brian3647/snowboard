@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, net::SocketAddr};
 
 /// Any valid HTTP method.
 #[cfg_attr(feature = "json", derive(serde::Serialize))]
@@ -106,6 +106,26 @@ impl From<&str> for HttpVersion {
 			"HTTP/2.0" => HttpVersion::V2_0,
 			"HTTP/3.0" => HttpVersion::V3_0,
 			_ => HttpVersion::UNKNOWN,
+		}
+	}
+}
+
+/// Formats a socket address into something usable.
+pub fn format_addr(addr: SocketAddr) -> String {
+	match addr {
+		SocketAddr::V4(v4) => {
+			if v4.ip().is_loopback() {
+				format!("localhost:{}", v4.port())
+			} else {
+				v4.to_string()
+			}
+		}
+		SocketAddr::V6(v6) => {
+			if v6.ip().is_loopback() {
+				format!("localhost:{}", v6.port())
+			} else {
+				format!("{}:{}", v6.ip(), v6.port())
+			}
 		}
 	}
 }

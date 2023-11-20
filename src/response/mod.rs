@@ -58,20 +58,15 @@ impl Response {
 
 	/// Sets a header to the response. Use Response::content_type for the 'Content-Type' header.
 	pub fn set_header(mut self, key: &'static str, value: String) -> Self {
-		if let Some(headers) = &mut self.headers {
-			headers.insert(key, value);
-		} else {
-			let mut headers = HashMap::new();
-			headers.insert(key, value);
-			self.headers = Some(headers);
-		}
+		self.headers
+			.get_or_insert_with(HashMap::new)
+			.insert(key, value);
 
 		self
 	}
 
 	/// Sets the content type of the response. Note that this does not check if the content type
 	/// is valid, so be careful.
-	#[inline]
 	pub fn content_type(self, value: String) -> Self {
 		self.set_header("Content-Type", value)
 	}
@@ -96,6 +91,16 @@ impl Response {
 		let mut bytes = self.prepare_response().into_bytes();
 		bytes.append(&mut self.bytes);
 		bytes
+	}
+
+	/// Gets the length of the response body.
+	pub fn len(&self) -> usize {
+		self.bytes.len()
+	}
+
+	/// Checks if the response body is empty.
+	pub fn is_empty(&self) -> bool {
+		self.bytes.is_empty()
 	}
 }
 

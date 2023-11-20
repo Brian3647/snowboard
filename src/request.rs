@@ -83,9 +83,24 @@ impl Request {
 		self.get_header(key).unwrap_or(default)
 	}
 
+	/// Checks if a header exists.
+	pub fn has_header(&self, key: &str) -> bool {
+		self.headers.contains_key(key)
+	}
+
 	/// Sets a header using any key and value convertible to Strings
 	pub fn set_header<T: ToString, K: ToString>(&mut self, k: T, v: K) {
 		self.headers.insert(k.to_string(), v.to_string());
+	}
+
+	/// Gets the length of the body.
+	pub fn len(&self) -> usize {
+		self.body.len()
+	}
+
+	/// Checks if the body is empty.
+	pub fn is_empty(&self) -> bool {
+		self.body.is_empty()
 	}
 
 	/// Gets the body as a string.
@@ -144,8 +159,8 @@ impl Request {
 		self.url.as_str().into()
 	}
 
-	/// Get the IP address of the client as a link.
+	/// Get the IP address of the client, formatted.
 	pub fn ip(&self) -> String {
-		crate::Server::format_addr(self.ip)
+		crate::util::format_addr(self.ip)
 	}
 }

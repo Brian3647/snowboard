@@ -30,6 +30,11 @@ impl<'a> Url<'a> {
 	pub fn search_param(&self, key: &'a str) -> Option<&'a str> {
 		self.search_params.get(key).copied()
 	}
+
+	/// Checks if a search parameter exists.
+	pub fn has_search_param(&self, key: &'a str) -> bool {
+		self.search_params.contains_key(key)
+	}
 }
 
 impl<'a> From<&'a str> for Url<'a> {
