@@ -78,9 +78,11 @@ snowboard = { version = "*", features = ["async"] }
 ```rust
 // src/main.rs
 use snowboard::{Request, ResponseLike, Server, Result};
+use async_std::task;
+use std::duration::Duration;
 
 async fn index(_: Request) -> impl ResponseLike {
-    // Any async logic
+    task::sleep(Duration::from_secs(1)).await;
 
     "Async works"
 }
@@ -136,7 +138,7 @@ fn handle_ws(mut ws: WebSocket) {
 fn main() -> snowboard::Result {
 	Server::new("localhost:3000")?
 		.on_websocket("/ws", handle_ws)
-		.run(|_| "Try `/ws`!") 
+		.run(|_| "Try `/ws`!")
 }
 ```
 

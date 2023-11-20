@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies.snowboard]
 path = "../.."
-features = ["async"]
+features = ["async", "websocket"]
 
 [dependencies]
 async-std = "1.12.0"
