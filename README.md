@@ -133,15 +133,15 @@ use snowboard::Server;
 use snowboard::WebSocket;
 
 fn handle_ws(mut ws: WebSocket) {
-	while let Ok(msg) = ws.read() {
-		ws.send(msg).unwrap();
-	}
+    while let Ok(msg) = ws.read() {
+        ws.send(msg).unwrap();
+    }
 }
 
 fn main() -> snowboard::Result {
-	Server::new("localhost:3000")?
-		.on_websocket("/ws", handle_ws)
-		.run(|_| "Try `/ws`!")
+    Server::new("localhost:3000")?
+        .on_websocket("/ws", handle_ws)
+        .run(|_| "Try `/ws`!")
 }
 ```
 
@@ -168,6 +168,50 @@ fn main() -> Result {
 ```
 
 ## **Integration**
+
+### **JSON**
+
+JSON is supported with the `json` feature (serializing & deserializing):
+
+```rs
+use serde_json::Value;
+use snowboard::{Response, Server};
+
+#[derive(serde::Deserialize)]
+struct Example {
+    number: isize,
+}
+
+fn main() -> snowboard::Result {
+    Server::new("localhost:8080")?.run(|req| -> Result<Value, Response> {
+        let example: Example = req.force_json()?;
+
+        Ok(serde_json::json!({
+            "number_plus_one": example.number + 1
+        }))
+    });
+}
+```
+
+```rs
+use snowboard::Server;
+
+fn main() -> snowboard::Result {
+	Server::new("localhost:3000")?.run(|r| {
+		serde_json::json!({
+			"ip": r.ip(),
+			"url": r.parse_url(),
+			"method": r.method,
+			"body": r.text(),
+			"headers": r.headers,
+		})
+	})
+}
+```
+
+`force_json` returns a result of either the parsed JSON or a bad request response. If you want to handle the error yourself, use `json` instead.
+
+### **ResponseLike**
 
 Snowboard's `ResponseLike` is designed to work with pretty much anything, but it wont by default with certain cases like `maud`'s `html!` macro. If you happen to use a lot a crate that doesn't work with Snowboard, please open an issue, pr or implement `ResponseLike` for it:
 
