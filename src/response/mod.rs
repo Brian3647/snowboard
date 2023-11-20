@@ -57,7 +57,7 @@ impl Response {
 	}
 
 	/// Sets a header to the response. Use Response::content_type for the 'Content-Type' header.
-	pub fn set_header(&mut self, key: &'static str, value: String) {
+	pub fn set_header(mut self, key: &'static str, value: String) -> Self {
 		if let Some(headers) = &mut self.headers {
 			headers.insert(key, value);
 		} else {
@@ -65,12 +65,14 @@ impl Response {
 			headers.insert(key, value);
 			self.headers = Some(headers);
 		}
+
+		self
 	}
 
 	/// Sets the content type of the response. Note that this does not check if the content type
 	/// is valid, so be careful.
 	#[inline]
-	pub fn content_type(&mut self, value: String) {
+	pub fn content_type(self, value: String) -> Self {
 		self.set_header("Content-Type", value)
 	}
 

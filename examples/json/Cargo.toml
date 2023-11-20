@@ -9,3 +9,4 @@ features = ["json"]
 
 [dependencies]
 serde_json = "*"
+serde = { version = "*", features = ["derive"] }
