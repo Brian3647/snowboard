@@ -183,8 +183,7 @@ impl ResponseLike for Example {
 }
 
 fn main() -> snowboard::Result {
-    Server::new("localhost:8080")
-        .unwrap()
+    Server::new("localhost:8080")?
         .run(|_| Example { num: 5 });
 }
 ```
