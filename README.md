@@ -49,11 +49,11 @@ fn main() -> Result {
 
     let server = Server::new("localhost:8080")?;
 
-    println!("Listening on {}", server.addr().unwrap());
+    println!("Listening on {}", server.pretty_addr()?);
 
     server.run(move |mut req| {
-        if req.method != Method::GET {
-            return response!(method_not_allowed);
+        if req.method == Method::DELETE {
+            return response!(method_not_allowed, "Caught you trying to delete!");
         }
 
         req.set_header("X-Server", "Snowboard");
@@ -61,7 +61,7 @@ fn main() -> Result {
         println!("{req:#?}");
 
         response!(ok, data, headers! { "X-Hello" => "World!" })
-    });
+    })
 }
 ```
 
