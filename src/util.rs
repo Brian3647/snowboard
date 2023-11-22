@@ -28,20 +28,7 @@ pub enum Method {
 
 impl Display for Method {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		let method = match self {
-			Method::GET => "GET",
-			Method::POST => "POST",
-			Method::PUT => "PUT",
-			Method::DELETE => "DELETE",
-			Method::HEAD => "HEAD",
-			Method::OPTIONS => "OPTIONS",
-			Method::CONNECT => "CONNECT",
-			Method::PATCH => "PATCH",
-			Method::TRACE => "TRACE",
-			Method::UNKNOWN => "UNKNOWN",
-		};
-
-		write!(f, "{}", method)
+		write!(f, "{:?}", self)
 	}
 }
 
