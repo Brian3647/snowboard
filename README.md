@@ -149,7 +149,7 @@ fn main() -> snowboard::Result {
 
 Routing can be handled easily using the `Url` struct:
 
-```rs
+```rust
 use snowboard::{response, Request, ResponseLike, Result, Server};
 
 fn router(req: Request) -> impl ResponseLike {
@@ -173,7 +173,7 @@ fn main() -> Result {
 
 JSON is supported with the `json` feature (serializing & deserializing):
 
-```rs
+```rust
 use serde_json::Value;
 use snowboard::{Response, Server};
 
@@ -193,7 +193,7 @@ fn main() -> snowboard::Result {
 }
 ```
 
-```rs
+```rust
 use snowboard::Server;
 
 fn main() -> snowboard::Result {
