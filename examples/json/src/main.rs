@@ -1,13 +1,17 @@
-use snowboard::Server;
+use serde_json::Value;
+use snowboard::{Response, Server};
+
+#[derive(serde::Deserialize)]
+struct Example {
+	number: isize,
+}
 
 fn main() -> snowboard::Result {
-	Server::new("localhost:3000")?.run(|r| {
-		serde_json::json!({
-			"ip": r.pretty_ip(),
-			"url": r.parse_url(),
-			"method": r.method,
-			"body": r.text(),
-			"headers": r.headers,
-		})
-	})
+	Server::new("localhost:8080")?.run(|req| -> Result<Value, Response> {
+		let example: Example = req.force_json()?;
+
+		Ok(serde_json::json!({
+			"number_plus_one": example.number + 1
+		}))
+	});
 }

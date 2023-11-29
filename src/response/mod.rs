@@ -56,8 +56,9 @@ impl Response {
 		stream.flush()
 	}
 
-	/// Sets a header to the response. Use Response::content_type for the 'Content-Type' header.
-	pub fn set_header(mut self, key: &'static str, value: String) -> Self {
+	/// Sets a header to the response, returning the response itself.
+	/// Use Response::with_content_type for the 'Content-Type' header.
+	pub fn with_header(mut self, key: &'static str, value: String) -> Self {
 		self.headers
 			.get_or_insert_with(HashMap::new)
 			.insert(key, value);
@@ -65,10 +66,24 @@ impl Response {
 		self
 	}
 
-	/// Sets the content type of the response. Note that this does not check if the content type
-	/// is valid, so be careful.
-	pub fn content_type(self, value: String) -> Self {
-		self.set_header("Content-Type", value)
+	/// Sets the content type of the response, returning the response itself.
+	/// Note that this does not check if the content type is valid, so be careful.
+	pub fn with_content_type(self, value: String) -> Self {
+		self.with_header("Content-Type", value)
+	}
+
+	/// Sets the content length of a reference to a response
+	pub fn set_header(&mut self, key: &'static str, value: String) -> &mut Self {
+		self.headers
+			.get_or_insert_with(HashMap::new)
+			.insert(key, value);
+
+		self
+	}
+
+	/// Sets the content length of a reference to a response
+	pub fn set_content_length(&mut self, len: usize) -> &mut Self {
+		self.set_header("Content-Length", len.to_string())
 	}
 
 	/// Returns the first lines of the generated response. (everything except the body)
@@ -101,6 +116,28 @@ impl Response {
 	/// Checks if the response body is empty.
 	pub fn is_empty(&self) -> bool {
 		self.bytes.is_empty()
+	}
+
+	/// Adds optional but useful headers to a response.
+	/// This includes the Content-Length header, Date header and Server header.
+	pub fn with_default_headers(mut self) -> Self {
+		let now = chrono::Utc::now().to_rfc2822();
+		let len = self.len();
+
+		self.set_header("Content-Length", len.to_string())
+			.set_header("Date", now)
+			.set_header("Server", "Snowboard".into());
+
+		self
+	}
+
+	/// Used internally to add default headers if needed.
+	pub(crate) fn maybe_add_defaults(mut self, should_insert: bool) -> Self {
+		if should_insert {
+			self = self.with_default_headers();
+		}
+
+		self
 	}
 }
 

@@ -31,6 +31,7 @@ use std::future::Future;
 pub struct Server {
 	acceptor: TcpListener,
 	buffer_size: usize,
+	insert_default_headers: bool,
 	#[cfg(feature = "tls")]
 	tls_acceptor: TlsAcceptor,
 	#[cfg(feature = "websocket")]
@@ -48,6 +49,7 @@ impl Server {
 			buffer_size: DEFAULT_BUFFER_SIZE,
 			#[cfg(feature = "websocket")]
 			ws_handler: None,
+			insert_default_headers: false,
 		})
 	}
 
@@ -61,7 +63,15 @@ impl Server {
 			tls_acceptor,
 			#[cfg(feature = "websocket")]
 			ws_handler: None,
+			insert_default_headers: false,
 		})
+	}
+
+	/// Enables automatic insertion of default headers in responses.
+	/// This includes `Server`, `Date` and `Content-Length`.
+	pub fn with_default_headers(mut self) -> Self {
+		self.insert_default_headers = true;
+		self
 	}
 
 	/// Get the address the server is listening on.
@@ -120,8 +130,10 @@ impl Server {
 		#[cfg(feature = "websocket")]
 		let ws_handler = self.ws_handler.clone();
 
+		let should_insert = self.insert_default_headers;
+
 		// Needed for avoiding warning when compiling without the websocket feature.
-		#[allow(unused_mut)]
+		#[cfg_attr(not(feature = "websocket"), allow(unused_mut))]
 		for (mut stream, mut request) in self {
 			let handler = handler.clone();
 
@@ -131,7 +143,10 @@ impl Server {
 					return Ok(());
 				};
 
-				handler(request).to_response().send_to(&mut stream)
+				handler(request)
+					.to_response()
+					.maybe_add_defaults(should_insert)
+					.send_to(&mut stream)
 			});
 		}
 
@@ -148,8 +163,10 @@ impl Server {
 		#[cfg(feature = "websocket")]
 		let ws_handler = self.ws_handler.clone();
 
+		let should_insert = self.insert_default_headers;
+
 		// Needed for avoiding warning when compiling without the websocket feature.
-		#[allow(unused_mut)]
+		#[cfg_attr(not(feature = "websocket"), allow(unused_mut))]
 		for (mut stream, mut request) in self {
 			async_std::task::spawn(async move {
 				#[cfg(feature = "websocket")]
@@ -157,7 +174,11 @@ impl Server {
 					return Ok(());
 				};
 
-				handler(request).await.to_response().send_to(&mut stream)
+				handler(request)
+					.await
+					.to_response()
+					.maybe_add_defaults(should_insert)
+					.send_to(&mut stream)
 			});
 		}
 

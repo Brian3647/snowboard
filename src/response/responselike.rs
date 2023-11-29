@@ -23,32 +23,21 @@ impl ResponseLike for () {
 impl ResponseLike for &str {
 	#[inline]
 	fn to_response(self) -> Response {
-		let len = self.len();
-		crate::response!(ok, self, crate::headers! { "Content-Length" => len })
+		crate::response!(ok, self)
 	}
 }
 
 impl ResponseLike for String {
 	#[inline]
 	fn to_response(self) -> Response {
-		let len = self.len();
-		crate::response!(
-			ok,
-			self,
-			crate::headers! { "Content-Length" => len, "Content-Type" => "text/plain" }
-		)
+		crate::response!(ok, self)
 	}
 }
 
 impl ResponseLike for Vec<u8> {
 	#[inline]
 	fn to_response(self) -> Response {
-		let len = self.len();
-		crate::response!(
-			ok,
-			self,
-			crate::headers! { "Content-Length" => len, "Content-Type" => "application/octet-stream" }
-		)
+		crate::response!(ok, self)
 	}
 }
 
@@ -71,14 +60,12 @@ impl ResponseLike for serde_json::Error {
 	#[inline]
 	fn to_response(self) -> Response {
 		let bytes = self.to_string().into_bytes();
-		let len = bytes.len();
 
 		crate::response!(
 			bad_request,
 			bytes,
 			crate::headers! {
-				"Content-Type" => "text/plain",
-				"Content-Length" => len
+				"Content-Type" => "text/plain; charset=utf-8",
 			}
 		)
 	}
@@ -89,14 +76,12 @@ impl ResponseLike for serde_json::Value {
 	#[inline]
 	fn to_response(self) -> Response {
 		let bytes = serde_json::to_vec(&self).unwrap_or_else(|_| self.to_string().into_bytes());
-		let len = bytes.len();
 
 		crate::response!(
 			ok,
 			bytes,
 			crate::headers! {
-				"Content-Type" => "application/json",
-				"Content-Length" => len
+				"Content-Type" => "application/json; charset=utf-8",
 			}
 		)
 	}
