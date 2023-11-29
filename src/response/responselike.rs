@@ -67,6 +67,24 @@ where
 }
 
 #[cfg(feature = "json")]
+impl ResponseLike for serde_json::Error {
+	#[inline]
+	fn to_response(self) -> Response {
+		let bytes = self.to_string().into_bytes();
+		let len = bytes.len();
+
+		crate::response!(
+			bad_request,
+			bytes,
+			crate::headers! {
+				"Content-Type" => "text/plain",
+				"Content-Length" => len
+			}
+		)
+	}
+}
+
+#[cfg(feature = "json")]
 impl ResponseLike for serde_json::Value {
 	#[inline]
 	fn to_response(self) -> Response {

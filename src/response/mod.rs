@@ -1,7 +1,7 @@
 mod response_types;
-mod traits;
+mod responselike;
 
-pub use traits::ResponseLike;
+pub use responselike::ResponseLike;
 
 use std::{collections::HashMap, fmt, io};
 
