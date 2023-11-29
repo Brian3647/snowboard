@@ -3,6 +3,9 @@ use std::{borrow::Cow, collections::HashMap};
 
 use crate::{Method, Url};
 
+#[cfg(feature = "json")]
+use crate::ResponseLike;
+
 /// A server request.
 /// Parses the raw request string into a more usable format.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -150,7 +153,7 @@ impl Request {
 	where
 		T: for<'a> serde::de::Deserialize<'a>,
 	{
-		self.json().map_err(|_| crate::response!(bad_request))
+		self.json().map_err(|e| e.to_response())
 	}
 
 	/// Get a parsed version of the URL.
