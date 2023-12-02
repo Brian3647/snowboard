@@ -8,7 +8,7 @@
 [![DeepSource](https://app.deepsource.com/gh/Brian3647/snowboard.svg/?label=active+issues&show_trend=false)](https://app.deepsource.com/gh/Brian3647/snowboard/)
 [![dependency status](https://deps.rs/repo/github/Brian3647/snowboard/status.svg)](https://deps.rs/repo/github/Brian3647/snowboard)
 
-An extremely simple (& blazingly fast) library for HTTP & HTTPS servers in Rust
+An asynchronous, extremely simple (& blazingly fast) library for HTTP & HTTPS servers in Rust
 
 [Request a feature/Report a bug](https://github.com/Brian3647/snowboard/issues)
 
@@ -17,16 +17,18 @@ An extremely simple (& blazingly fast) library for HTTP & HTTPS servers in Rust
 <details>
 <summary>Table of Contents</summary>
 
-1. [**Snowboard 🏂**](#snowboard-)
-    1. [**Quick start**](#quick-start)
-    2. [**Async routes**](#async-routes)
-    3. [**TLS**](#tls)
-    4. [**Websockets**](#websockets)
-    5. [**Routing**](#routing)
-    6. [**Integration**](#integration)
-    7. [**MSRV (Minimum Supported Rust Version)**](#msrv-minimum-supported-rust-version)
-    8. [**Contributing**](#contributing)
-    9. [**License**](#license)
+-   [**Snowboard 🏂**](#snowboard-)
+    -   [**Quick start**](#quick-start)
+    -   [**Async routes**](#async-routes)
+    -   [**TLS**](#tls)
+    -   [**Websockets**](#websockets)
+    -   [**Routing**](#routing)
+    -   [**Integration**](#integration)
+        -   [**JSON**](#json)
+        -   [**ResponseLike**](#responselike)
+    -   [**MSRV (Minimum Supported Rust Version)**](#msrv-minimum-supported-rust-version)
+    -   [**Contributing**](#contributing)
+    -   [**License**](#license)
 
 </details>
 
@@ -197,13 +199,13 @@ fn main() -> snowboard::Result {
 use snowboard::Server;
 
 fn main() -> snowboard::Result {
-	Server::new("localhost:3000")?.run(|r| {
-		serde_json::json!({
-			"ip": r.ip(),
-			"url": r.parse_url(),
-			"method": r.method,
-			"body": r.text(),
-			"headers": r.headers,
+    Server::new("localhost:3000")?.run(|r| {
+        serde_json::json!({
+            "ip": r.ip(),
+            "url": r.parse_url(),
+            "method": r.method,
+            "body": r.text(),
+            "headers": r.headers,
 		})
 	})
 }
