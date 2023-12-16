@@ -12,7 +12,7 @@ pub(crate) use tungstenite::WebSocket;
 fn build_handshake(sec_key: String) -> HashMap<&'static str, String> {
 	let mut sha1 = Sha1::new();
 	sha1.update(sec_key.as_bytes());
-	sha1.update("258EAFA5-E914-47DA-95CA-C5AB0DC85B11".as_bytes());
+	sha1.update(b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
 	let accept_value = BASE64ENGINE.encode(sha1.finalize());
 
 	headers! {
