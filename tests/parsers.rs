@@ -19,7 +19,7 @@ fn parse_request() {
 	let sample_ip = "127.0.0.1:8080".parse().unwrap();
 
 	assert_eq!(
-		Request::new(request.to_vec(), sample_ip).unwrap(),
+		Request::new(request, sample_ip).unwrap(),
 		Request {
 			ip: sample_ip,
 			url: "/".into(),
@@ -45,7 +45,7 @@ fn parse_invalid_utf8() {
 
 	let sample_ip = "127.0.0.1:8080".parse().unwrap();
 
-	let parsed = Request::new(request, sample_ip).unwrap();
+	let parsed = Request::new(&request, sample_ip).unwrap();
 
 	assert_eq!(
 		parsed,

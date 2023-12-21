@@ -7,7 +7,7 @@ fn parse_request(c: &mut Criterion) {
 
 	c.bench_function("parse_request", |b| {
 		b.iter(|| {
-			Request::new(bytes.clone(), ip);
+			Request::new(&bytes, ip);
 		})
 	});
 

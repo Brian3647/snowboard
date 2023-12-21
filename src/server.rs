@@ -102,6 +102,13 @@ impl Server {
 		self.buffer_size = size;
 	}
 
+	/// Sets the buffer size and returns self.
+	/// See [`set_buffer_size`].
+	pub fn with_buffer_size(mut self, size: usize) -> Self {
+		self.buffer_size = size;
+		self
+	}
+
 	/// Set a handler for WebSocket connections.
 	/// The handler function will be called when a WebSocket connection is received.
 	///
@@ -155,9 +162,10 @@ impl Server {
 
 	/// Runs the server asynchronously using multiple threads.
 	#[cfg(feature = "async")]
-	pub fn run_async<F, T>(self, handler: fn(Request) -> F) -> !
+	pub fn run_async<F, T, R>(self, handler: F) -> !
 	where
-		F: Future<Output = T> + Send + 'static,
+		F: Fn(Request) -> R + Send + 'static + Clone,
+		R: Future<Output = T> + Send + 'static,
 		T: ResponseLike,
 	{
 		#[cfg(feature = "websocket")]
@@ -168,6 +176,8 @@ impl Server {
 		// Needed for avoiding warning when compiling without the websocket feature.
 		#[cfg_attr(not(feature = "websocket"), allow(unused_mut))]
 		for (mut stream, mut request) in self {
+			let handler = handler.clone();
+
 			async_std::task::spawn(async move {
 				#[cfg(feature = "websocket")]
 				if maybe_websocket(ws_handler, &mut stream, &mut request) {
@@ -264,11 +274,7 @@ impl Server {
 			return Err(io::Error::new(io::ErrorKind::InvalidInput, "Empty request"));
 		}
 
-		if let Some(end) = buffer.iter().position(|&x| x == 0) {
-			buffer.truncate(end);
-		}
-
-		let req = match Request::new(buffer, ip) {
+		let req = match Request::new(&buffer[..payload_size], ip) {
 			Some(req) => req,
 			None => return Err(io::Error::from(io::ErrorKind::InvalidInput)),
 		};

@@ -29,7 +29,7 @@ pub struct Request {
 impl Request {
 	/// Parses and creates a requeset from raw text and an ip address.
 	/// Note that this does not parse the url (See [Request::url]).
-	pub fn new(bytes: Vec<u8>, ip: SocketAddr) -> Option<Self> {
+	pub fn new(bytes: &[u8], ip: SocketAddr) -> Option<Self> {
 		let mut lines = bytes.split(|&byte| byte == b'\n');
 
 		let first_line = String::from_utf8(lines.next()?.to_vec()).ok()?;
