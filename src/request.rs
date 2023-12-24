@@ -47,7 +47,10 @@ impl Request {
 		for line in lines {
 			match (in_body, line == b"\r") {
 				(false, true) => in_body = true,
-				(true, _) => body.extend_from_slice(line),
+				(true, _) => {
+					body.extend_from_slice(line);
+					body.push(0x0a /* newline byte */)
+				}
 				_ => {
 					if let Some((key, value)) = Self::parse_header(line) {
 						headers.insert(key, value);
@@ -55,6 +58,8 @@ impl Request {
 				}
 			}
 		}
+
+		body.pop(); // Remove last newline byte (0x0a)
 
 		Some(Self {
 			ip,

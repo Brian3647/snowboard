@@ -14,7 +14,7 @@ use snowboard::{Method, Request, Url};
 
 #[test]
 fn parse_request() {
-	let request = b"HEAD / HTTP/1.1\r\nHost: localhost:8080\r\nUser-Agent: curl/xx\r\nAccept: */*\r\n\r\nBODY, BODY, BODY";
+	let request = b"HEAD / HTTP/1.1\r\nHost: localhost:8080\r\nUser-Agent: curl/xx\r\nAccept: */*\r\n\r\nBODY, BODY, BODY\nMORE BODY\n";
 
 	let sample_ip = "127.0.0.1:8080".parse().unwrap();
 
@@ -24,7 +24,7 @@ fn parse_request() {
 			ip: sample_ip,
 			url: "/".into(),
 			method: Method::HEAD,
-			body: "BODY, BODY, BODY".into(),
+			body: "BODY, BODY, BODY\nMORE BODY\n".into(),
 			headers: map_into! {
 				"Host" => "localhost:8080",
 				"User-Agent" => "curl/xx",
