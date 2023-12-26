@@ -1,3 +1,5 @@
+//! A module that provides server implementation for the library.
+
 use crate::Request;
 use crate::ResponseLike;
 
@@ -29,12 +31,17 @@ use std::future::Future;
 
 /// Single threaded listener made for simpler servers.
 pub struct Server {
+	/// It stores the TcpListener struct.
 	acceptor: TcpListener,
+	/// It stores the buffer size for the Tcp requests.
 	buffer_size: usize,
+	/// It stores the default HTTP/HTTPS request headers.
 	insert_default_headers: bool,
+	/// It stores the TlsAcceptor struct when the tls feature is enabled.
 	#[cfg(feature = "tls")]
 	tls_acceptor: TlsAcceptor,
 	#[cfg(feature = "websocket")]
+	/// It stores the WebSocket configuration for the HTTP/HTTPS server.
 	ws_handler: Option<(&'static str, fn(WebSocket<&mut Stream>))>,
 }
 
@@ -221,6 +228,12 @@ impl Server {
 
 	#[cfg(not(feature = "tls"))]
 	#[inline]
+	/// A helper function which handles the requests done from the client.
+	///
+	/// # Error
+	///
+	/// Returns a tuple containing the stream and Client request on success otherwise returns an io
+	/// error on failure.
 	fn try_accept_inner(&self) -> io::Result<(Stream, Request)> {
 		let (stream, ip) = self.acceptor.accept()?;
 		self.handle_request(stream, ip)
@@ -253,6 +266,19 @@ impl Server {
 		}
 	}
 
+	/// A helper function which handles request by checking whether the request has an appropriate
+	/// buffer size by checking if it is too large or zero (in other words empty response). Also it
+	/// checks whether the request contains a valid input.
+	///
+	/// # Arguments
+	///
+	/// * `stream` - It takes the stream implementing read and write as an argument.
+	/// * `ip` - It takes the ip address as a SocketAddr type.
+	///
+	/// # Error
+	///
+	/// Returns a tuple containing stream implementing write and read traits and Request struct on
+	/// success otherwise returns an io error on failure.
 	fn handle_request<T: io::Write + io::Read>(
 		&self,
 		mut stream: T,
