@@ -15,6 +15,9 @@ pub const DEFAULT_HTTP_VERSION: HttpVersion = HttpVersion::V1_1;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Response {
 	/// HTTP protocol version.
+	/// Do note the server only supports HTTP/1.1, so even if
+	/// this is specified as HTTP/2.0 or any other, it'll still
+	/// be a HTTP/1.1 response.
 	pub version: HttpVersion,
 	/// HTTP status code.
 	pub status: u16,

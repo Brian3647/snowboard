@@ -1208,6 +1208,7 @@ version = "1.0.3"
 dependencies = [
  "async-std",
  "base64",
+ "bytes",
  "chrono",
  "criterion",
  "native-tls",

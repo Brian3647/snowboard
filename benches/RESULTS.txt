@@ -31,3 +31,14 @@ Parsing urls is a bit slower than expected, probably due to splitting by `/`, `?
 Complex url tested: /path/to/something?param1=value1&param2=value2&param3=value3&s=& - ~400ns (0.4µs)
 Simple url tested: /a/b?c=d - ~140ns
 Base url tested: / - ~30ns
+
+---------------
+
+REQUEST PARSING (Tue Dec 26 11:56 AM CET 2023)
+
+before:
+time:   [293.92 ns 295.88 ns 297.98 ns]
+
+after:
+time:   [236.59 ns 237.49 ns 238.45 ns]
+change: [-19.721% -19.068% -18.434%]

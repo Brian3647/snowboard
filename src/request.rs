@@ -30,36 +30,32 @@ impl Request {
 	/// Parses and creates a requeset from raw text and an ip address.
 	/// Note that this does not parse the url (See [Request::url]).
 	pub fn new(bytes: &[u8], ip: SocketAddr) -> Option<Self> {
-		let mut lines = bytes.split(|&byte| byte == b'\n');
+		let mut words = bytes.split(|b| *b == b' ');
 
-		let first_line = String::from_utf8(lines.next()?.to_vec()).ok()?;
-		let mut parts = first_line.split_whitespace();
+		let method = Method::from(words.next()?);
 
-		let method = Method::from(parts.next()?);
-		let url = parts.next()?.into();
+		let url_bytes = words.next()?;
+		let url = String::from_utf8(url_bytes.into()).ok()?;
 
-		// Default capacity for headers is 12, but it will grow automatically if needed.
+		words.next()?; // Skip HTTP version
+
+		// most browsers send 10-12 headers, and it's not that big of an allocation
 		let mut headers = HashMap::with_capacity(12);
 
 		let mut in_body = false;
 		let mut body = Vec::new();
 
-		for line in lines {
-			match (in_body, line == b"\r") {
-				(false, true) => in_body = true,
-				(true, _) => {
-					body.extend_from_slice(line);
-					body.push(0x0a /* newline byte */)
-				}
-				_ => {
-					if let Some((key, value)) = Self::parse_header(line) {
-						headers.insert(key, value);
-					}
-				}
+		for line in bytes.split(|b| *b == b'\n').skip(1) {
+			if line.is_empty() && !in_body {
+				in_body = true;
+				continue;
+			} else if in_body {
+				body.extend_from_slice(line);
+			} else {
+				let (key, value) = Self::parse_header(line)?;
+				headers.insert(key, value);
 			}
 		}
-
-		body.pop(); // Remove last newline byte (0x0a)
 
 		Some(Self {
 			ip,

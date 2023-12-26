@@ -32,18 +32,18 @@ impl Display for Method {
 	}
 }
 
-impl From<&str> for Method {
-	fn from(method: &str) -> Self {
+impl From<&[u8]> for Method {
+	fn from(method: &[u8]) -> Self {
 		match method {
-			"GET" => Method::GET,
-			"POST" => Method::POST,
-			"PUT" => Method::PUT,
-			"DELETE" => Method::DELETE,
-			"HEAD" => Method::HEAD,
-			"OPTIONS" => Method::OPTIONS,
-			"CONNECT" => Method::CONNECT,
-			"PATCH" => Method::PATCH,
-			"TRACE" => Method::TRACE,
+			b"GET" => Method::GET,
+			b"POST" => Method::POST,
+			b"PUT" => Method::PUT,
+			b"DELETE" => Method::DELETE,
+			b"HEAD" => Method::HEAD,
+			b"OPTIONS" => Method::OPTIONS,
+			b"CONNECT" => Method::CONNECT,
+			b"PATCH" => Method::PATCH,
+			b"TRACE" => Method::TRACE,
 			_ => Method::UNKNOWN,
 		}
 	}
