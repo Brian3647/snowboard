@@ -70,7 +70,6 @@ impl Request {
 	}
 
 	fn parse_header(line: &[u8]) -> Option<(String, String)> {
-		println!("Parsing header: {:?}", String::from_utf8_lossy(line));
 		let pos = line.iter().position(|&byte| byte == b':')?;
 		let (key, rest) = line.split_at(pos);
 		let value = &rest[1..rest.len() - 1];
