@@ -1,3 +1,5 @@
+//! A module that provides code to handle the websocketing funtionality of the server-client.
+
 use std::{collections::HashMap, io};
 
 use crate::{headers, Request};

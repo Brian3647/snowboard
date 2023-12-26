@@ -1,8 +1,11 @@
+//! A module that provides code to provide different data types which are available for parsing
+//! responses into the appropriate available data type.
+
 use crate::{Headers, HttpVersion, Response};
 
-// Macro rule used to create response types during compile time.
-// We don't want every function to have documentation for it,
-// since it would bloat the documentation, so we hide it.
+/// Macro rule used to create response types during compile time.
+/// We don't want every function to have documentation for it,
+/// since it would bloat the documentation, so we hide it.
 macro_rules! create_response_types {
     ($($name:ident, $code:expr, $text:expr);*) => {
 		type OptHeaders = Option<Headers>;

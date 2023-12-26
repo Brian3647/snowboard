@@ -1,3 +1,5 @@
+//! A module that provides code to handle the HTTP/HTTPS header method types.
+
 use std::{fmt::Display, net::SocketAddr};
 
 /// Any valid HTTP method.

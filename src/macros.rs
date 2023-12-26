@@ -1,3 +1,5 @@
+//! A module that handles and provides easy to use macros for the user.
+
 /// A quick way to create responses.
 ///
 /// Usage:

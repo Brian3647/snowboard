@@ -1,3 +1,5 @@
+//! A module that provides code to handle the parsing of the URL of the server.
+
 use std::{collections::HashMap, fmt::Display};
 
 /// A parsed URL.

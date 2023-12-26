@@ -1,3 +1,6 @@
+//! A module that provides code and other modules to serialize/deserialize response into appropriate
+//! data types.
+
 mod response_types;
 mod responselike;
 

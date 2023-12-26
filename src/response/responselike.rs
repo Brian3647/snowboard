@@ -1,3 +1,6 @@
+//! A module that provides and handles traits which can help in serializing and deserializing
+//! response into different data types.
+
 use super::Response;
 
 /// A trait for everything that can be converted into a Response.

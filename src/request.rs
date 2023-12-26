@@ -1,3 +1,5 @@
+//! A module that provides code to handle https/http requests.
+
 use std::net::SocketAddr;
 use std::{borrow::Cow, collections::HashMap};
 
@@ -67,6 +69,15 @@ impl Request {
 		})
 	}
 
+	/// A function that parses the header form the raw http request headers.
+	///
+	/// # Arguments
+	///
+	/// * `line` - It takes a http request header line as a byte slice.
+	///
+	/// # Returns
+	///
+	/// It returns an option type of tuple string containing the parsed header key value pairs.
 	fn parse_header(line: &[u8]) -> Option<(String, String)> {
 		let pos = line.iter().position(|&byte| byte == b':')?;
 		let (key, rest) = line.split_at(pos);
@@ -160,7 +171,7 @@ impl Request {
 
 	/// Get a parsed version of the URL.
 	/// See [Url]
-	pub fn parse_url(&self) -> Url {
+	pub fn parse_url(&self) -> Url<'_> {
 		self.url.as_str().into()
 	}
 
