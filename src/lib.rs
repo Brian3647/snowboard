@@ -1,5 +1,6 @@
-#![forbid(missing_docs)]
-#![forbid(unsafe_code)]
+#![forbid(unsafe_code, clippy::panic)]
+#![deny(missing_docs, clippy::missing_docs_in_private_items, clippy::perf)]
+#![warn(clippy::cognitive_complexity, rust_2018_idioms)]
 #![doc = include_str!("../README.md")]
 
 mod macros;
