@@ -46,16 +46,19 @@ impl Request {
 		let mut body = Vec::new();
 
 		for line in bytes.split(|b| *b == b'\n').skip(1) {
-			if line.is_empty() && !in_body {
+			if (line == b"\r" || line.is_empty()) && !in_body {
 				in_body = true;
 				continue;
 			} else if in_body {
 				body.extend_from_slice(line);
+				body.push(0x0a); // newline
 			} else {
 				let (key, value) = Self::parse_header(line)?;
 				headers.insert(key, value);
 			}
 		}
+
+		body.pop(); // remove last newline
 
 		Some(Self {
 			ip,
@@ -67,9 +70,10 @@ impl Request {
 	}
 
 	fn parse_header(line: &[u8]) -> Option<(String, String)> {
+		println!("Parsing header: {:?}", String::from_utf8_lossy(line));
 		let pos = line.iter().position(|&byte| byte == b':')?;
 		let (key, rest) = line.split_at(pos);
-		let value = &rest[1..];
+		let value = &rest[1..rest.len() - 1];
 
 		Some((
 			String::from_utf8_lossy(key).trim().to_string(),
