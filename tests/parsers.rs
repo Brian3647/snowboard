@@ -65,6 +65,44 @@ fn parse_invalid_utf8() {
 }
 
 #[test]
+fn test_different_amount_of_headers() {
+	let sample_ip = "127.0.0.1:8080".parse().unwrap();
+
+	let base_request = b"GET / HTTP/1.1\r\nHost: localhost:8080\r\n";
+
+	for i in 0..20 {
+		let mut request = base_request.to_vec();
+
+		for _ in 0..i {
+			request.extend_from_slice(b"A: B\r\n");
+		}
+
+		request.extend_from_slice(b"\r\n");
+		request.extend_from_slice(b"h");
+
+		let parsed = Request::new(&request, sample_ip).unwrap();
+
+		let mut headers = HashMap::new();
+		for _ in 0..i {
+			headers.insert("A".into(), "B".into());
+		}
+
+		headers.insert("Host".into(), "localhost:8080".into());
+
+		assert_eq!(
+			parsed,
+			Request {
+				ip: sample_ip,
+				url: "/".into(),
+				method: Method::GET,
+				body: b"h".into(),
+				headers
+			}
+		);
+	}
+}
+
+#[test]
 fn parse_url() {
 	let complex = "/path/to/something?param1=value1&param2=value2&param3=value3&s=&";
 	let simple = "/a/b?c=d";

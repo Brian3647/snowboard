@@ -37,28 +37,26 @@ impl Request {
 		let url_bytes = words.next()?;
 		let url = String::from_utf8(url_bytes.into()).ok()?;
 
-		words.next()?; // Skip HTTP version
+		words.next()?;
 
 		// most browsers send 10-12 headers, and it's not that big of an allocation
 		let mut headers = HashMap::with_capacity(12);
 
-		let mut in_body = false;
-		let mut body = Vec::new();
-
 		for line in bytes.split(|b| *b == b'\n').skip(1) {
-			if (line == b"\r" || line.is_empty()) && !in_body {
-				in_body = true;
-				continue;
-			} else if in_body {
-				body.extend_from_slice(line);
-				body.push(0x0a); // newline
-			} else {
-				let (key, value) = Self::parse_header(line)?;
-				headers.insert(key, value);
+			if line == b"\r" || line.is_empty() {
+				break;
 			}
+
+			let (key, value) = Self::parse_header(line)?;
+			headers.insert(key, value);
 		}
 
-		body.pop(); // remove last newline
+		let body = if let Some(position) = bytes.windows(4).position(|window| window == b"\r\n\r\n")
+		{
+			bytes[position + 4..].into()
+		} else {
+			vec![]
+		};
 
 		Some(Self {
 			ip,

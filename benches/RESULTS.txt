@@ -42,3 +42,12 @@ time:   [293.92 ns 295.88 ns 297.98 ns]
 after:
 time:   [236.59 ns 237.49 ns 238.45 ns]
 change: [-19.721% -19.068% -18.434%]
+
+after (fixed):
+
+time:   [302.88 ns 307.47 ns 312.76 ns]
+change: [+25.950% +27.266% +28.833%]
+
+after (v2):
+
+time:   [291.43 ns 293.19 ns 295.22 ns] ~ around the same time as before
