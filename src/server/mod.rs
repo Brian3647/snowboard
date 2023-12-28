@@ -4,6 +4,9 @@ use crate::Request;
 use crate::ResponseLike;
 
 pub mod listener;
+pub mod shutdown;
+
+use shutdown::Shutdown;
 
 /// The size of the buffer used to read incoming requests.
 /// It's set to 8KiB by default.
@@ -280,7 +283,7 @@ impl Server {
 	}
 
 	/// Reads a stream and creates a `Request` instance from it and the given `ip`.
-	fn handle_request<T: io::Write + io::Read>(
+	fn handle_request<T: io::Write + io::Read + Shutdown>(
 		&self,
 		mut stream: T,
 		ip: SocketAddr,
@@ -311,7 +314,7 @@ impl Server {
 
 	// Extremely simple HTTP to HTTPS redirect.
 	#[cfg(feature = "tls")]
-	fn handle_not_tls<T: io::Read + io::Write>(&self, mut stream: T) -> io::Result<()> {
+	fn handle_not_tls<T: io::Read + io::Write + Shutdown>(&self, mut stream: T) -> io::Result<()> {
 		let mut buffer: Vec<u8> = vec![0; self.buffer_size];
 
 		stream.read(&mut buffer)?;

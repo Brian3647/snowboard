@@ -8,7 +8,7 @@ pub use responselike::ResponseLike;
 
 use std::{collections::HashMap, fmt, io};
 
-use crate::HttpVersion;
+use crate::{HttpVersion, Shutdown};
 
 /// The default HTTP version used by the server.
 pub const DEFAULT_HTTP_VERSION: HttpVersion = HttpVersion::V1_1;
@@ -55,11 +55,12 @@ impl Response {
 	}
 
 	/// Writes the response, consuming its body.
-	pub fn send_to<T: io::Write>(&mut self, stream: &mut T) -> Result<(), io::Error> {
+	pub fn send_to<T: io::Write + Shutdown>(&mut self, stream: &mut T) -> Result<(), io::Error> {
 		let prev = self.prepare_response().into_bytes();
 		stream.write_all(&prev)?;
 		stream.write_all(&self.bytes)?;
-		stream.flush()
+		stream.flush()?;
+		stream.shutdown_stream()
 	}
 
 	/// Sets a header to the response, returning the response itself.

@@ -2,7 +2,7 @@
 
 use std::{collections::HashMap, io};
 
-use crate::{headers, Request};
+use crate::{headers, Request, Shutdown};
 
 use base64::engine::general_purpose::STANDARD as BASE64ENGINE;
 use base64::Engine;
@@ -38,7 +38,7 @@ impl Request {
 
 	/// Upgrades a request to a WebSocket connection.
 	/// Returns `None` if the request is not a WebSocket handshake request.
-	pub fn upgrade<T: io::Write>(&mut self, mut stream: T) -> Option<WebSocket<T>> {
+	pub fn upgrade<T: io::Write + Shutdown>(&mut self, mut stream: T) -> Option<WebSocket<T>> {
 		if !self.is_websocket() {
 			return None;
 		}
@@ -62,11 +62,14 @@ impl Request {
 /// If upgrading succeeds, the WebSocket is passed to `self.ws_handler`.
 /// Does nothing if the request is not a WebSocket handshake request.
 #[cfg(feature = "websocket")]
-pub fn maybe_websocket<Stream: io::Write>(
+pub fn maybe_websocket<Stream: io::Write + Shutdown>(
 	handler: Option<(&'static str, fn(WebSocket<&mut Stream>))>,
 	stream: &mut Stream,
 	req: &mut Request,
-) -> bool {
+) -> bool
+where
+	for<'a> &'a mut Stream: Shutdown,
+{
 	let handler = match handler {
 		Some((path, f)) if req.url.starts_with(path) => f,
 		_ => return false,

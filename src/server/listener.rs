@@ -1,6 +1,6 @@
 //! Listener implementation.
 
-use std::{io, net};
+use std::{io, net, time::Duration};
 
 use mio::{net as mio_net, Events, Interest, Poll, Token};
 
@@ -28,8 +28,11 @@ impl Listener {
 	) -> io::Result<()> {
 		let mut poll = Poll::new()?;
 		let mut events = Events::with_capacity(128);
-		poll.registry()
-			.register(&mut self.inner, SERVER, Interest::READABLE)?;
+		poll.registry().register(
+			&mut self.inner,
+			SERVER,
+			Interest::READABLE | Interest::WRITABLE,
+		)?;
 
 		loop {
 			self.loop_inner(&mut poll, &mut events, &handler)?;
@@ -44,20 +47,17 @@ impl Listener {
 		events: &mut Events,
 		handler: &F,
 	) -> io::Result<()> {
-		poll.poll(events, None)?;
+		poll.poll(events, Some(Duration::from_millis(100)))?;
 
 		for event in events.iter() {
-			match event.token() {
-				SERVER => {
-					let (stream, addr) = match self.inner.accept() {
-						Ok((stream, addr)) => (stream, addr),
-						Err(e) if is_wouldblock(&e) => continue,
-						Err(e) => return Err(e),
-					};
+			if event.token() != SERVER || !event.is_readable() {
+				continue;
+			}
 
-					handler(stream, addr);
-				}
-				_ => unreachable!(),
+			match self.inner.accept() {
+				Ok((connection, address)) => handler(connection, address),
+				Err(ref e) if is_wouldblock(e) => break,
+				Err(e) => return Err(e),
 			}
 		}
 
