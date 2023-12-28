@@ -1,16 +1,14 @@
-//! A module that provides server implementation for the library.
-
 use crate::Request;
 use crate::ResponseLike;
+
+pub mod listener;
 
 /// The size of the buffer used to read incoming requests.
 /// It's set to 8KiB by default.
 pub const DEFAULT_BUFFER_SIZE: usize = 1024 * 8;
 
-use std::{
-	io,
-	net::{SocketAddr, TcpListener, TcpStream, ToSocketAddrs},
-};
+use mio::net::TcpStream;
+use std::{io, net::SocketAddr};
 
 #[cfg(feature = "tls")]
 use native_tls::{TlsAcceptor, TlsStream};
@@ -29,19 +27,16 @@ use crate::ws::{maybe_websocket, WebSocket};
 #[cfg(feature = "async")]
 use std::future::Future;
 
+use listener::Listener;
+
 /// Single threaded listener made for simpler servers.
 pub struct Server {
-	/// It stores the TcpListener struct.
-	acceptor: TcpListener,
-	/// It stores the buffer size for the Tcp requests.
+	addr: SocketAddr,
 	buffer_size: usize,
-	/// It stores the default HTTP/HTTPS request headers.
 	insert_default_headers: bool,
-	/// It stores the TlsAcceptor struct when the tls feature is enabled.
 	#[cfg(feature = "tls")]
 	tls_acceptor: TlsAcceptor,
 	#[cfg(feature = "websocket")]
-	/// It stores the WebSocket configuration for the HTTP/HTTPS server.
 	ws_handler: Option<(&'static str, fn(WebSocket<&mut Stream>))>,
 }
 
@@ -50,28 +45,28 @@ impl Server {
 	/// Create a new server instance.
 	/// The server will listen on the given address.
 	#[cfg(not(feature = "tls"))]
-	pub fn new(addr: impl ToSocketAddrs) -> io::Result<Self> {
-		Ok(Self {
-			acceptor: TcpListener::bind(addr)?,
+	pub fn new(addr: SocketAddr) -> Self {
+		Self {
+			addr,
 			buffer_size: DEFAULT_BUFFER_SIZE,
 			#[cfg(feature = "websocket")]
 			ws_handler: None,
 			insert_default_headers: false,
-		})
+		}
 	}
 
 	/// Create a new server instance with TLS.
 	/// The server will listen on the given address.
 	#[cfg(feature = "tls")]
-	pub fn new_with_tls(addr: impl ToSocketAddrs, tls_acceptor: TlsAcceptor) -> io::Result<Self> {
-		Ok(Self {
-			acceptor: TcpListener::bind(addr)?,
+	pub fn new_with_tls(addr: SocketAddr, tls_acceptor: TlsAcceptor) -> Self {
+		Self {
+			addr,
 			buffer_size: DEFAULT_BUFFER_SIZE,
 			tls_acceptor,
 			#[cfg(feature = "websocket")]
 			ws_handler: None,
 			insert_default_headers: false,
-		})
+		}
 	}
 
 	/// Enables automatic insertion of default headers in responses.
@@ -83,14 +78,15 @@ impl Server {
 
 	/// Get the address the server is listening on.
 	#[inline]
-	pub fn addr(&self) -> io::Result<SocketAddr> {
-		self.acceptor.local_addr()
+	pub fn addr(&self) -> SocketAddr {
+		self.addr
 	}
 
 	/// Get the address the server is listening on as a string,
 	/// formatted to be able to use it as a link.
-	pub fn pretty_addr(&self) -> io::Result<String> {
-		self.addr().map(crate::util::format_addr)
+	#[inline]
+	pub fn pretty_addr(&self) -> String {
+		crate::util::format_addr(self.addr)
 	}
 
 	/// Set the buffer size used to read incoming requests.
@@ -136,11 +132,26 @@ impl Server {
 		self
 	}
 
+	/// Generates a new `Listener` instance from `self.addr`.
+	fn listener(&self) -> io::Result<Listener> {
+		Listener::new(self.addr)
+	}
+
+	/// Uses `self.acceptor.loop` to accept connections parsing the `Request`
+	#[inline(always)]
+	fn r#loop(self, handler: impl Fn(Stream, Request)) -> io::Result<()> {
+		self.listener()?.r#loop(move |stream, ip| {
+			if let Ok((stream, request)) = self.try_accept(stream, ip) {
+				handler(stream, request);
+			}
+		})
+	}
+
 	/// Runs the server synchronously using multiple threads.
 	pub fn run<T: ResponseLike>(
 		self,
 		handler: impl Fn(Request) -> T + Send + 'static + Clone,
-	) -> ! {
+	) -> io::Result<()> {
 		#[cfg(feature = "websocket")]
 		let ws_handler = self.ws_handler.clone();
 
@@ -148,28 +159,26 @@ impl Server {
 
 		// Needed for avoiding warning when compiling without the websocket feature.
 		#[cfg_attr(not(feature = "websocket"), allow(unused_mut))]
-		for (mut stream, mut request) in self {
+		self.r#loop(|mut stream, mut request| {
 			let handler = handler.clone();
 
 			std::thread::spawn(move || {
 				#[cfg(feature = "websocket")]
 				if maybe_websocket(ws_handler, &mut stream, &mut request) {
-					return Ok(());
+					return;
 				};
 
-				handler(request)
+				let _ = handler(request)
 					.to_response()
 					.maybe_add_defaults(should_insert)
-					.send_to(&mut stream)
+					.send_to(&mut stream);
 			});
-		}
-
-		unreachable!("Server::run() should never return")
+		})
 	}
 
 	/// Runs the server asynchronously using multiple threads.
 	#[cfg(feature = "async")]
-	pub fn run_async<F, T, R>(self, handler: F) -> !
+	pub fn run_async<F, T, R>(self, handler: F) -> io::Result<()>
 	where
 		F: Fn(Request) -> R + Send + 'static + Clone,
 		R: Future<Output = T> + Send + 'static,
@@ -182,7 +191,7 @@ impl Server {
 
 		// Needed for avoiding warning when compiling without the websocket feature.
 		#[cfg_attr(not(feature = "websocket"), allow(unused_mut))]
-		for (mut stream, mut request) in self {
+		self.r#loop(|mut stream, mut request| {
 			let handler = handler.clone();
 
 			async_std::task::spawn(async move {
@@ -197,9 +206,7 @@ impl Server {
 					.maybe_add_defaults(should_insert)
 					.send_to(&mut stream)
 			});
-		}
-
-		unreachable!("Server::run() should never return")
+		})
 	}
 }
 
@@ -222,31 +229,27 @@ impl Server {
 	/// }
 	/// ```
 	#[inline]
-	pub fn try_accept(&self) -> io::Result<(Stream, Request)> {
-		self.try_accept_inner()
+	pub fn try_accept(&self, stream: TcpStream, ip: SocketAddr) -> io::Result<(Stream, Request)> {
+		self.try_accept_inner(stream, ip)
 	}
 
 	#[cfg(not(feature = "tls"))]
 	#[inline]
-	/// A helper function which handles the requests done from the client.
-	///
-	/// # Error
-	///
-	/// Returns a tuple containing the stream and Client request on success otherwise returns an io
-	/// error on failure.
-	fn try_accept_inner(&self) -> io::Result<(Stream, Request)> {
-		let (stream, ip) = self.acceptor.accept()?;
+	fn try_accept_inner(&self, stream: TcpStream, ip: SocketAddr) -> io::Result<(Stream, Request)> {
 		self.handle_request(stream, ip)
 	}
 
 	#[cfg(feature = "tls")]
-	fn try_accept_inner(&self) -> io::Result<(Stream, Request)> {
+	fn try_accept_inner(
+		&self,
+		mut tcp_stream: TcpStream,
+		ip: SocketAddr,
+	) -> io::Result<(Stream, Request)> {
 		// Using `tls_acceptor` directly consumes the first 4 bytes of the stream,
 		// making redirects hard (and maybe impossible) to implement. `native_tls` uses
 		// different implementations (even externally) for `TlsAcceptor`, so the only
 		// safe way is this.
 
-		let (mut tcp_stream, ip) = self.acceptor.accept()?;
 		let mut buffer = [0; 2];
 		tcp_stream.peek(&mut buffer)?;
 
@@ -266,19 +269,6 @@ impl Server {
 		}
 	}
 
-	/// A helper function which handles request by checking whether the request has an appropriate
-	/// buffer size by checking if it is too large or zero (in other words empty response). Also it
-	/// checks whether the request contains a valid input.
-	///
-	/// # Arguments
-	///
-	/// * `stream` - It takes the stream implementing read and write as an argument.
-	/// * `ip` - It takes the ip address as a SocketAddr type.
-	///
-	/// # Error
-	///
-	/// Returns a tuple containing stream implementing write and read traits and Request struct on
-	/// success otherwise returns an io error on failure.
 	fn handle_request<T: io::Write + io::Read>(
 		&self,
 		mut stream: T,
@@ -339,7 +329,7 @@ impl Server {
 			moved_permanently,
 			[],
 			crate::headers! {
-				"Location" => format!("https://{}{}", self.pretty_addr().unwrap_or_default(), path),
+				"Location" => format!("https://{}{}", self.pretty_addr(), path),
 				"Connection" => "keep-alive",
 				"Content-Length" => 0
 			}
@@ -347,28 +337,5 @@ impl Server {
 		.send_to(&mut stream)?;
 
 		Ok(())
-	}
-}
-
-impl Iterator for Server {
-	type Item = (Stream, Request);
-
-	fn next(&mut self) -> Option<Self::Item> {
-		match self.try_accept() {
-			Ok(r) => Some(r),
-			// TLS errors, parse requests and cancelled connections are ignored.
-			Err(e)
-				if e.kind() == io::ErrorKind::ConnectionAborted
-					|| e.kind() == io::ErrorKind::ConnectionReset
-					|| e.kind() == io::ErrorKind::InvalidInput =>
-			{
-				self.next()
-			}
-			Err(e) => {
-				// Probably an important error.
-				eprintln!("Server generated error: {:#?}", e);
-				self.next() // Continue anyways. We don't want to stop the server at production.
-			}
-		}
 	}
 }

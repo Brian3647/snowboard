@@ -1,6 +1,6 @@
 use async_std::task;
 use snowboard::{Request, ResponseLike, Result, Server};
-use std::time::Duration;
+use std::{net::SocketAddr, time::Duration};
 
 async fn index(_: Request) -> impl ResponseLike {
 	task::sleep(Duration::from_secs(1)).await;
@@ -15,7 +15,7 @@ async fn ws_handler(mut ws: snowboard::WebSocket<'_>) {
 }
 
 fn main() -> Result {
-	Server::new("localhost:8080")?
+	Server::new(SocketAddr::from(([0, 0, 0, 0], 3000)))
 		.on_websocket("/ws", |ws| async_std::task::block_on(ws_handler(ws)))
-		.run_async(index);
+		.run_async(index)
 }

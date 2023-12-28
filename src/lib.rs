@@ -15,6 +15,7 @@ mod ws;
 
 pub use request::Request;
 pub use response::{Headers, Response, ResponseLike, DEFAULT_HTTP_VERSION};
+pub use server::listener::Listener;
 pub use server::{Server, Stream, DEFAULT_BUFFER_SIZE};
 pub use url::Url;
 pub use util::{HttpVersion, Method};

@@ -1,4 +1,5 @@
 use snowboard::{response, Result, Server};
+use std::net::SocketAddr;
 
 struct ServerData {
 	hello: String,
@@ -9,7 +10,7 @@ fn main() -> Result {
 		hello: "hi!".into(),
 	};
 
-	Server::new("localhost:8080")?.run(move |request| {
+	Server::new(SocketAddr::from(([0, 0, 0, 0], 3000))).run(move |request| {
 		println!("{:#?}", request);
 
 		response!(ok, data.hello.clone())
