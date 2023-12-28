@@ -1,11 +1,15 @@
+//! Listener implementation.
+
 use std::{io, net};
 
 use mio::{net as mio_net, Events, Interest, Poll, Token};
 
+/// Mio token for the server.
 const SERVER: Token = Token(0);
 
 /// A wrapper around `TcpListener` that allows faster request handling.
 pub struct Listener {
+	/// The inner `TcpListener` instance.
 	inner: mio_net::TcpListener,
 }
 
@@ -32,6 +36,7 @@ impl Listener {
 		}
 	}
 
+	/// Inner part of the loop, separated to a function for testing & identation.
 	#[inline(always)]
 	fn loop_inner<F: Fn(mio_net::TcpStream, net::SocketAddr)>(
 		&self,
@@ -60,6 +65,8 @@ impl Listener {
 	}
 }
 
+/// Checks if the error is a wouldblock error.
+#[inline(always)]
 fn is_wouldblock(e: &io::Error) -> bool {
 	e.kind() == io::ErrorKind::WouldBlock
 }

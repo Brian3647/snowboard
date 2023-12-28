@@ -1,3 +1,5 @@
+//! Server & listener implementation.
+
 use crate::Request;
 use crate::ResponseLike;
 
@@ -31,12 +33,17 @@ use listener::Listener;
 
 /// Single threaded listener made for simpler servers.
 pub struct Server {
+	/// The address the server is listening on.
 	addr: SocketAddr,
+	/// The size of the buffer used to read incoming requests.
 	buffer_size: usize,
+	/// Whether to insert default headers in responses.
 	insert_default_headers: bool,
+	/// TLS acceptor.
 	#[cfg(feature = "tls")]
 	tls_acceptor: TlsAcceptor,
 	#[cfg(feature = "websocket")]
+	/// WS handler & path.
 	ws_handler: Option<(&'static str, fn(WebSocket<&mut Stream>))>,
 }
 
@@ -233,12 +240,15 @@ impl Server {
 		self.try_accept_inner(stream, ip)
 	}
 
+	/// When tls is not enabled, accepting is jut handling the request.
 	#[cfg(not(feature = "tls"))]
 	#[inline]
 	fn try_accept_inner(&self, stream: TcpStream, ip: SocketAddr) -> io::Result<(Stream, Request)> {
 		self.handle_request(stream, ip)
 	}
 
+	/// Check whether the request is a tls handshake, if so, handle it,
+	/// otherwise, return a moved permanently response.
 	#[cfg(feature = "tls")]
 	fn try_accept_inner(
 		&self,
@@ -269,6 +279,7 @@ impl Server {
 		}
 	}
 
+	/// Reads a stream and creates a `Request` instance from it and the given `ip`.
 	fn handle_request<T: io::Write + io::Read>(
 		&self,
 		mut stream: T,
