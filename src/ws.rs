@@ -1,9 +1,10 @@
 //! A module that provides code to handle the websocketing funtionality of the server-client.
 
-use std::{collections::HashMap, io};
+use std::collections::HashMap;
 
 use crate::{headers, Request, Shutdown};
 
+use async_std::io::WriteExt;
 use base64::engine::general_purpose::STANDARD as BASE64ENGINE;
 use base64::Engine;
 
@@ -38,7 +39,10 @@ impl Request {
 
 	/// Upgrades a request to a WebSocket connection.
 	/// Returns `None` if the request is not a WebSocket handshake request.
-	pub fn upgrade<T: io::Write + Shutdown>(&mut self, mut stream: T) -> Option<WebSocket<T>> {
+	pub async fn upgrade<T: WriteExt + Shutdown + Unpin>(
+		&mut self,
+		mut stream: T,
+	) -> Option<WebSocket<T>> {
 		if !self.is_websocket() {
 			return None;
 		}
@@ -46,8 +50,9 @@ impl Request {
 		let ws_key = self.headers.get("Sec-WebSocket-Key")?.clone();
 		let handshake = build_handshake(ws_key);
 
-		crate::response!(switching_protocols, [], handshake)
+		crate::Response::switching_protocols([], Some(handshake))
 			.send_to(&mut stream)
+			.await
 			.ok()?;
 
 		Some(WebSocket::from_raw_socket(
@@ -62,7 +67,7 @@ impl Request {
 /// If upgrading succeeds, the WebSocket is passed to `self.ws_handler`.
 /// Does nothing if the request is not a WebSocket handshake request.
 #[cfg(feature = "websocket")]
-pub fn maybe_websocket<Stream: io::Write + Shutdown>(
+pub async fn maybe_websocket<Stream: WriteExt + Shutdown + Unpin>(
 	handler: Option<(&'static str, fn(WebSocket<&mut Stream>))>,
 	stream: &mut Stream,
 	req: &mut Request,
@@ -76,6 +81,6 @@ where
 	};
 
 	// Calls `handler` if `request.upgrade(..)` returns `Some(..)`.
-	req.upgrade(stream).map(handler);
+	req.upgrade(stream).await.map(handler);
 	true
 }

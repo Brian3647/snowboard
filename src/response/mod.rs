@@ -6,7 +6,8 @@ mod responselike;
 
 pub use responselike::ResponseLike;
 
-use std::{collections::HashMap, fmt, io};
+use async_std::io::{self, WriteExt};
+use std::{collections::HashMap, fmt};
 
 use crate::{HttpVersion, Shutdown};
 
@@ -39,14 +40,13 @@ impl Response {
 	/// Manually create a Response instance.
 	/// Use Response::ok(), Response::bad_request() etc. instead when possible.
 	pub fn new(
-		version: HttpVersion,
 		status: u16,
 		status_text: &'static str,
 		bytes: Vec<u8>,
 		headers: Option<Headers>,
 	) -> Self {
 		Self {
-			version,
+			version: DEFAULT_HTTP_VERSION,
 			status,
 			status_text,
 			bytes,
@@ -55,11 +55,14 @@ impl Response {
 	}
 
 	/// Writes the response, consuming its body.
-	pub fn send_to<T: io::Write + Shutdown>(&mut self, stream: &mut T) -> Result<(), io::Error> {
+	pub async fn send_to<T: io::Write + Shutdown + Unpin>(
+		&mut self,
+		stream: &mut T,
+	) -> Result<(), io::Error> {
 		let prev = self.prepare_response().into_bytes();
-		stream.write_all(&prev)?;
-		stream.write_all(&self.bytes)?;
-		stream.flush()?;
+		stream.write_all(&prev).await?;
+		stream.write_all(&self.bytes).await?;
+		stream.flush().await?;
 		stream.shutdown_stream()
 	}
 

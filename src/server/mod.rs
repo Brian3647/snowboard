@@ -1,22 +1,27 @@
 //! Server & listener implementation.
 
 use crate::Request;
+use crate::Response;
 use crate::ResponseLike;
 
 pub mod listener;
 pub mod shutdown;
 
+use async_std::io::ReadExt;
+use async_std::io::WriteExt;
 use shutdown::Shutdown;
 
 /// The size of the buffer used to read incoming requests.
 /// It's set to 8KiB by default.
 pub const DEFAULT_BUFFER_SIZE: usize = 1024 * 8;
 
-use mio::net::TcpStream;
-use std::{io, net::SocketAddr};
+use async_std::{
+	io,
+	net::{SocketAddr, TcpStream},
+};
 
 #[cfg(feature = "tls")]
-use native_tls::{TlsAcceptor, TlsStream};
+use async_native_tls::{TlsAcceptor, TlsStream};
 
 /// A TCP stream
 #[cfg(not(feature = "tls"))]
@@ -29,7 +34,6 @@ pub type Stream = TlsStream<TcpStream>;
 #[cfg(feature = "websocket")]
 use crate::ws::{maybe_websocket, WebSocket};
 
-#[cfg(feature = "async")]
 use std::future::Future;
 
 use listener::Listener;
@@ -143,52 +147,36 @@ impl Server {
 	}
 
 	/// Generates a new `Listener` instance from `self.addr`.
-	fn listener(&self) -> io::Result<Listener> {
-		Listener::new(self.addr)
+	pub async fn listener(&self) -> io::Result<Listener> {
+		Listener::new(self.addr).await
 	}
 
 	/// Uses `self.acceptor.loop` to accept connections parsing the `Request`
 	#[inline(always)]
-	fn r#loop(self, handler: impl Fn(Stream, Request)) -> io::Result<()> {
-		self.listener()?.r#loop(move |stream, ip| {
-			if let Ok((stream, request)) = self.try_accept(stream, ip) {
-				handler(stream, request);
-			}
-		})
+	async fn r#loop<'a>(&self, handler: &(impl Fn(Stream, Request) + 'a)) -> io::Result<()> {
+		let listener = self.listener().await?;
+		listener
+			.r#loop(&move |stream, ip| async move {
+				if let Ok((stream, request)) = self.try_accept(stream, ip).await {
+					handler(stream, request);
+				}
+			})
+			.await
 	}
 
-	/// Runs the server synchronously using multiple threads.
-	pub fn run<T: ResponseLike>(
-		self,
-		handler: impl Fn(Request) -> T + Send + 'static + Clone,
-	) -> io::Result<()> {
-		#[cfg(feature = "websocket")]
-		let ws_handler = self.ws_handler.clone();
-
-		let should_insert = self.insert_default_headers;
-
-		// Needed for avoiding warning when compiling without the websocket feature.
-		#[cfg_attr(not(feature = "websocket"), allow(unused_mut))]
-		self.r#loop(|mut stream, mut request| {
-			let handler = handler.clone();
-
-			std::thread::spawn(move || {
-				#[cfg(feature = "websocket")]
-				if maybe_websocket(ws_handler, &mut stream, &mut request) {
-					return;
-				};
-
-				let _ = handler(request)
-					.to_response()
-					.maybe_add_defaults(should_insert)
-					.send_to(&mut stream);
-			});
-		})
+	/// Runs the server.
+	pub fn run<F, T, R>(self, handler: F) -> !
+	where
+		F: Fn(Request) -> R + Send + 'static + Clone,
+		R: Future<Output = T> + Send + 'static,
+		T: ResponseLike,
+	{
+		async_std::task::block_on(self.run_inner(handler)).expect("Failed to start server");
+		unreachable!()
 	}
 
-	/// Runs the server asynchronously using multiple threads.
-	#[cfg(feature = "async")]
-	pub fn run_async<F, T, R>(self, handler: F) -> io::Result<()>
+	/// Runs the server asynchronously.
+	async fn run_inner<F, T, R>(self, handler: F) -> io::Result<()>
 	where
 		F: Fn(Request) -> R + Send + 'static + Clone,
 		R: Future<Output = T> + Send + 'static,
@@ -201,12 +189,12 @@ impl Server {
 
 		// Needed for avoiding warning when compiling without the websocket feature.
 		#[cfg_attr(not(feature = "websocket"), allow(unused_mut))]
-		self.r#loop(|mut stream, mut request| {
+		self.r#loop(&|mut stream, mut request| {
 			let handler = handler.clone();
 
 			async_std::task::spawn(async move {
 				#[cfg(feature = "websocket")]
-				if maybe_websocket(ws_handler, &mut stream, &mut request) {
+				if maybe_websocket(ws_handler, &mut stream, &mut request).await {
 					return Ok(());
 				};
 
@@ -215,8 +203,12 @@ impl Server {
 					.to_response()
 					.maybe_add_defaults(should_insert)
 					.send_to(&mut stream)
+					.await
 			});
 		})
+		.await?;
+
+		Ok(())
 	}
 }
 
@@ -234,26 +226,34 @@ impl Server {
 	///
 	/// let server = Server::new("localhost:8080").expect("failed to start server");
 	///
-	/// while let Ok((stream, request)) = server.try_accept() {
+	/// while let Ok((stream, request)) = server.try_accept().await {
 	///     // Handle a request
 	/// }
 	/// ```
 	#[inline]
-	pub fn try_accept(&self, stream: TcpStream, ip: SocketAddr) -> io::Result<(Stream, Request)> {
-		self.try_accept_inner(stream, ip)
+	pub async fn try_accept(
+		&self,
+		stream: TcpStream,
+		ip: SocketAddr,
+	) -> io::Result<(Stream, Request)> {
+		self.try_accept_inner(stream, ip).await
 	}
 
 	/// When tls is not enabled, accepting is jut handling the request.
 	#[cfg(not(feature = "tls"))]
 	#[inline]
-	fn try_accept_inner(&self, stream: TcpStream, ip: SocketAddr) -> io::Result<(Stream, Request)> {
-		self.handle_request(stream, ip)
+	async fn try_accept_inner(
+		&self,
+		stream: TcpStream,
+		ip: SocketAddr,
+	) -> io::Result<(Stream, Request)> {
+		self.handle_request(stream, ip).await
 	}
 
 	/// Check whether the request is a tls handshake, if so, handle it,
 	/// otherwise, return a moved permanently response.
 	#[cfg(feature = "tls")]
-	fn try_accept_inner(
+	async fn try_accept_inner(
 		&self,
 		mut tcp_stream: TcpStream,
 		ip: SocketAddr,
@@ -264,12 +264,12 @@ impl Server {
 		// safe way is this.
 
 		let mut buffer = [0; 2];
-		tcp_stream.peek(&mut buffer)?;
+		tcp_stream.peek(&mut buffer).await?;
 
 		if buffer == [0x16, 0x03] {
 			// This looks like a TLS handshake.
-			match self.tls_acceptor.accept(tcp_stream) {
-				Ok(tls_stream) => self.handle_request(tls_stream, ip),
+			match self.tls_acceptor.accept(tcp_stream).await {
+				Ok(tls_stream) => self.handle_request(tls_stream, ip).await,
 				Err(_) => {
 					// Continue to the next connection
 					Err(io::Error::from(io::ErrorKind::ConnectionAborted))
@@ -277,22 +277,24 @@ impl Server {
 			}
 		} else {
 			// This doesn't look like a TLS handshake. Handle it as a non-TLS request.
-			self.handle_not_tls(&mut tcp_stream)?;
+			self.handle_not_tls(&mut tcp_stream).await?;
 			Err(io::Error::from(io::ErrorKind::ConnectionAborted))
 		}
 	}
 
 	/// Reads a stream and creates a `Request` instance from it and the given `ip`.
-	fn handle_request<T: io::Write + io::Read + Shutdown>(
+	async fn handle_request<T: WriteExt + ReadExt + Shutdown + Unpin>(
 		&self,
 		mut stream: T,
 		ip: SocketAddr,
 	) -> io::Result<(T, Request)> {
 		let mut buffer: Vec<u8> = vec![0; self.buffer_size];
-		let payload_size = stream.read(&mut buffer)?;
+		let payload_size = stream.read(&mut buffer).await?;
 
 		if payload_size > self.buffer_size {
-			crate::response!(payload_too_large).send_to(&mut stream)?;
+			Response::payload_too_large(vec![], None)
+				.send_to(&mut stream)
+				.await?;
 			return Err(io::Error::new(
 				io::ErrorKind::InvalidInput,
 				"Payload too large",
@@ -300,7 +302,10 @@ impl Server {
 		}
 
 		if payload_size == 0 {
-			crate::response!(bad_request).send_to(&mut stream)?;
+			Response::bad_request(vec![], None)
+				.send_to(&mut stream)
+				.await?;
+
 			return Err(io::Error::new(io::ErrorKind::InvalidInput, "Empty request"));
 		}
 
@@ -314,10 +319,13 @@ impl Server {
 
 	// Extremely simple HTTP to HTTPS redirect.
 	#[cfg(feature = "tls")]
-	fn handle_not_tls<T: io::Read + io::Write + Shutdown>(&self, mut stream: T) -> io::Result<()> {
+	async fn handle_not_tls<T: ReadExt + WriteExt + Shutdown + Unpin>(
+		&self,
+		mut stream: T,
+	) -> io::Result<()> {
 		let mut buffer: Vec<u8> = vec![0; self.buffer_size];
 
-		stream.read(&mut buffer)?;
+		stream.read(&mut buffer).await?;
 
 		let mut path = vec![];
 		let mut in_path = false;
@@ -339,16 +347,16 @@ impl Server {
 
 		let path = String::from_utf8_lossy(&path).to_string();
 
-		crate::response!(
-			moved_permanently,
-			[],
-			crate::headers! {
+		Response::moved_permanently(
+			vec![],
+			Some(crate::headers! {
 				"Location" => format!("https://{}{}", self.pretty_addr(), path),
 				"Connection" => "keep-alive",
 				"Content-Length" => 0
-			}
+			}),
 		)
-		.send_to(&mut stream)?;
+		.send_to(&mut stream)
+		.await?;
 
 		Ok(())
 	}

@@ -1,7 +1,7 @@
-use snowboard::{response, Request, ResponseLike, Result, Server};
+use snowboard::{response, Request, ResponseLike, Server};
 use std::net::SocketAddr;
 
-fn router(req: Request) -> impl ResponseLike {
+async fn router(req: Request) -> impl ResponseLike {
 	// /{x}
 	match req.parse_url().at(0) {
 		Some("ping") => response!(ok, "Pong!"),
@@ -11,6 +11,6 @@ fn router(req: Request) -> impl ResponseLike {
 	}
 }
 
-fn main() -> Result {
+fn main() {
 	Server::new(SocketAddr::from(([0, 0, 0, 0], 3000))).run(router)
 }
