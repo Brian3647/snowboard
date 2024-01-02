@@ -4,8 +4,8 @@ use futures::stream::StreamExt;
 use std::future::Future;
 use std::io;
 
-use async_std::net;
 use async_std::net::TcpListener;
+use async_std::net::{self, ToSocketAddrs};
 
 /// A wrapper around `TcpListener` that allows faster request handling.
 pub struct Listener {
@@ -15,7 +15,7 @@ pub struct Listener {
 
 impl Listener {
 	/// Create a new listener instance from the given address.
-	pub async fn new(addr: net::SocketAddr) -> io::Result<Self> {
+	pub async fn new<A: ToSocketAddrs>(addr: A) -> io::Result<Self> {
 		let inner = TcpListener::bind(addr).await?;
 
 		Ok(Self { inner })

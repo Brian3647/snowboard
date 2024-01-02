@@ -100,7 +100,7 @@ impl From<&str> for HttpVersion {
 }
 
 /// Formats a socket address into something usable.
-pub fn format_addr(addr: SocketAddr) -> String {
+pub fn format_addr(addr: &SocketAddr) -> String {
 	match addr {
 		SocketAddr::V4(v4) => {
 			if v4.ip().is_loopback() {

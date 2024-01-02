@@ -9,6 +9,7 @@ pub mod shutdown;
 
 use async_std::io::ReadExt;
 use async_std::io::WriteExt;
+use async_std::net::ToSocketAddrs;
 use shutdown::Shutdown;
 
 /// The size of the buffer used to read incoming requests.
@@ -39,9 +40,9 @@ use std::future::Future;
 use listener::Listener;
 
 /// Single threaded listener made for simpler servers.
-pub struct Server {
+pub struct Server<A: ToSocketAddrs> {
 	/// The address the server is listening on.
-	addr: SocketAddr,
+	addr: A,
 	/// The size of the buffer used to read incoming requests.
 	buffer_size: usize,
 	/// Whether to insert default headers in responses.
@@ -55,11 +56,11 @@ pub struct Server {
 }
 
 /// Simple rust TCP HTTP server.
-impl Server {
+impl<A: ToSocketAddrs> Server<A> {
 	/// Create a new server instance.
 	/// The server will listen on the given address.
 	#[cfg(not(feature = "tls"))]
-	pub fn new(addr: SocketAddr) -> Self {
+	pub fn new(addr: A) -> Self {
 		Self {
 			addr,
 			buffer_size: DEFAULT_BUFFER_SIZE,
@@ -72,7 +73,7 @@ impl Server {
 	/// Create a new server instance with TLS.
 	/// The server will listen on the given address.
 	#[cfg(feature = "tls")]
-	pub fn new_with_tls(addr: SocketAddr, tls_acceptor: TlsAcceptor) -> Self {
+	pub fn new_with_tls(addr: A, tls_acceptor: TlsAcceptor) -> Self {
 		Self {
 			addr,
 			buffer_size: DEFAULT_BUFFER_SIZE,
@@ -92,15 +93,8 @@ impl Server {
 
 	/// Get the address the server is listening on.
 	#[inline]
-	pub fn addr(&self) -> SocketAddr {
-		self.addr
-	}
-
-	/// Get the address the server is listening on as a string,
-	/// formatted to be able to use it as a link.
-	#[inline]
-	pub fn pretty_addr(&self) -> String {
-		crate::util::format_addr(self.addr)
+	pub fn addr(&self) -> &A {
+		&self.addr
 	}
 
 	/// Set the buffer size used to read incoming requests.
@@ -148,7 +142,7 @@ impl Server {
 
 	/// Generates a new `Listener` instance from `self.addr`.
 	pub async fn listener(&self) -> io::Result<Listener> {
-		Listener::new(self.addr).await
+		Listener::new(&self.addr).await
 	}
 
 	/// Uses `self.acceptor.loop` to accept connections parsing the `Request`
@@ -214,7 +208,7 @@ impl Server {
 
 // This is a workaround to avoid having to copy documentation.
 
-impl Server {
+impl<A: ToSocketAddrs> Server<A> {
 	/// Try to accept a new incoming request safely.
 	/// Returns an error if the request could not be read, is empty or invalid.
 	/// The request will be read into a buffer and parsed into a `Request` instance.
@@ -359,5 +353,14 @@ impl Server {
 		.await?;
 
 		Ok(())
+	}
+}
+
+impl Server<SocketAddr> {
+	/// Get the address the server is listening on as a string,
+	/// formatted to be able to use it as a link.
+	#[inline]
+	pub fn pretty_addr(&self) -> String {
+		crate::util::format_addr(&self.addr)
 	}
 }

@@ -177,6 +177,6 @@ impl Request {
 
 	/// Get the IP address of the client, formatted.
 	pub fn pretty_ip(&self) -> String {
-		crate::util::format_addr(self.ip)
+		crate::util::format_addr(&self.ip)
 	}
 }
