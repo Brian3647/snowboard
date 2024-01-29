@@ -2,13 +2,13 @@
 
 use std::collections::HashMap;
 
-use crate::{headers, Request, Shutdown};
+use crate::{headers, Request, Stream};
 
-use async_std::io::WriteExt;
 use base64::engine::general_purpose::STANDARD as BASE64ENGINE;
 use base64::Engine;
 
 use sha1::{Digest, Sha1};
+use std::future::Future;
 pub(crate) use tungstenite::WebSocket;
 
 /// Builds the handshake headers for a WebSocket connection.
@@ -39,10 +39,7 @@ impl Request {
 
 	/// Upgrades a request to a WebSocket connection.
 	/// Returns `None` if the request is not a WebSocket handshake request.
-	pub async fn upgrade<T: WriteExt + Shutdown + Unpin>(
-		&mut self,
-		mut stream: T,
-	) -> Option<WebSocket<T>> {
+	pub async fn upgrade(&mut self, mut stream: Stream) -> Option<WebSocket<Stream>> {
 		if !self.is_websocket() {
 			return None;
 		}
@@ -50,7 +47,7 @@ impl Request {
 		let ws_key = self.headers.get("Sec-WebSocket-Key")?.clone();
 		let handshake = build_handshake(ws_key);
 
-		crate::Response::switching_protocols([], Some(handshake))
+		crate::Response::switching_protocols(vec![], Some(handshake))
 			.send_to(&mut stream)
 			.await
 			.ok()?;
@@ -67,13 +64,14 @@ impl Request {
 /// If upgrading succeeds, the WebSocket is passed to `self.ws_handler`.
 /// Does nothing if the request is not a WebSocket handshake request.
 #[cfg(feature = "websocket")]
-pub async fn maybe_websocket<Stream: WriteExt + Shutdown + Unpin>(
-	handler: Option<(&'static str, fn(WebSocket<&mut Stream>))>,
+pub async fn maybe_websocket<F, R>(
+	handler: Option<(&'static str, F)>,
 	stream: &mut Stream,
 	req: &mut Request,
 ) -> bool
 where
-	for<'a> &'a mut Stream: Shutdown,
+	F: Fn(WebSocket<&mut Stream>) -> R,
+	R: Future<Output = ()>,
 {
 	let handler = match handler {
 		Some((path, f)) if req.url.starts_with(path) => f,

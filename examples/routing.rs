@@ -1,5 +1,4 @@
 use snowboard::{response, Request, ResponseLike, Server};
-use std::net::SocketAddr;
 
 async fn router(req: Request) -> impl ResponseLike {
 	// /{x}
@@ -12,5 +11,7 @@ async fn router(req: Request) -> impl ResponseLike {
 }
 
 fn main() {
-	Server::new(SocketAddr::from(([0, 0, 0, 0], 3000))).run(router)
+	Server::from_defaults("localhost:3000")
+		.expect("Failed to get addr")
+		.run(router)
 }

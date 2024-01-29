@@ -6,10 +6,10 @@ mod responselike;
 
 pub use responselike::ResponseLike;
 
-use async_std::io::{self, WriteExt};
 use std::{collections::HashMap, fmt};
+use tokio::io;
 
-use crate::{HttpVersion, Shutdown};
+use crate::{server::stream::Stream, HttpVersion};
 
 /// The default HTTP version used by the server.
 pub const DEFAULT_HTTP_VERSION: HttpVersion = HttpVersion::V1_1;
@@ -55,15 +55,11 @@ impl Response {
 	}
 
 	/// Writes the response, consuming its body.
-	pub async fn send_to<T: io::Write + Shutdown + Unpin>(
-		&mut self,
-		stream: &mut T,
-	) -> Result<(), io::Error> {
+	pub async fn send_to(&mut self, stream: &mut Stream) -> Result<(), io::Error> {
 		let prev = self.prepare_response().into_bytes();
-		stream.write_all(&prev).await?;
-		stream.write_all(&self.bytes).await?;
-		stream.flush().await?;
-		stream.shutdown_stream()
+		stream.write(&prev).await?;
+		stream.write(&self.bytes).await?;
+		stream.flush().await
 	}
 
 	/// Sets a header to the response, returning the response itself.
@@ -137,15 +133,6 @@ impl Response {
 		self.set_header("Content-Length", len.to_string())
 			.set_header("Date", now)
 			.set_header("Server", "Snowboard".into());
-
-		self
-	}
-
-	/// Used internally to add default headers if needed.
-	pub(crate) fn maybe_add_defaults(mut self, should_insert: bool) -> Self {
-		if should_insert {
-			self = self.with_default_headers();
-		}
 
 		self
 	}

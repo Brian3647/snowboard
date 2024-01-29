@@ -12,7 +12,7 @@ fn main() -> Result {
 
 	let data_arc = Arc::clone(&data);
 
-	Server::new(SocketAddr::from(([0, 0, 0, 0], 3000))).run(move |request| {
+	Server::from_defaults("localhost:3000")?.run(move |request| {
 		let data = Arc::clone(&data_arc);
 		async move {
 			println!("{:#?}", request);

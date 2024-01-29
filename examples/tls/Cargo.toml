@@ -8,4 +8,4 @@ anyhow = "1.0.75"
 
 [dependencies.snowboard]
 path = "../.."
-features = ["tls", "websocket"]
+features = ["websocket"]
