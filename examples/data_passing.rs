@@ -1,5 +1,5 @@
 use snowboard::{response, Result, Server};
-use std::{net::SocketAddr, sync::Arc};
+use std::sync::Arc;
 
 struct ServerData {
 	hello: String,

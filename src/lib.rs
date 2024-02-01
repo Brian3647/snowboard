@@ -10,7 +10,6 @@ mod server;
 mod url;
 mod util;
 
-#[cfg(feature = "websocket")]
 mod ws;
 
 pub use request::Request;
@@ -20,12 +19,11 @@ pub use server::{Server, DEFAULT_BUFFER_SIZE};
 pub use url::Url;
 pub use util::{HttpVersion, Method};
 
-#[cfg(feature = "websocket")]
 /// A WebSocket connection.
 pub type WebSocket<'a> = tungstenite::WebSocket<&'a mut Stream>;
 
 // Re-export needed structs for `Server::new(...)` with TLS.
-pub use tokio_native_tls::{native_tls::Identity, TlsAcceptor};
+pub use tokio_native_tls::native_tls::{Identity, TlsAcceptor};
 
 /// A type alias for `std::io::Result<()>`
 /// used in `Server::new()?.run(...)`.

@@ -84,19 +84,19 @@ impl Request {
 		let value = &rest[1..rest.len() - 1];
 
 		Some((
-			String::from_utf8_lossy(key).trim().to_string(),
-			String::from_utf8_lossy(value).trim().to_string(),
+			String::from_utf8_lossy(key).trim().to_lowercase(),
+			String::from_utf8_lossy(value).trim().to_lowercase(),
 		))
 	}
 
 	/// Safely gets a header.
 	pub fn get_header(&self, key: &str) -> Option<&str> {
-		self.headers.get(key).map(|s| s.as_str())
+		self.headers.get(&key.to_lowercase()).map(|s| s.as_str())
 	}
 
 	/// Equivalent to `get_header(key).unwrap_or(default)`
 	pub fn get_header_or(&self, key: &str, default: &'static str) -> &str {
-		self.get_header(key).unwrap_or(default)
+		self.get_header(&key.to_lowercase()).unwrap_or(default)
 	}
 
 	/// Checks if a header exists.

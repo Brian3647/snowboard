@@ -8,7 +8,6 @@ use base64::engine::general_purpose::STANDARD as BASE64ENGINE;
 use base64::Engine;
 
 use sha1::{Digest, Sha1};
-use std::future::Future;
 pub(crate) use tungstenite::WebSocket;
 
 /// Builds the handshake headers for a WebSocket connection.
@@ -39,7 +38,10 @@ impl Request {
 
 	/// Upgrades a request to a WebSocket connection.
 	/// Returns `None` if the request is not a WebSocket handshake request.
-	pub async fn upgrade(&mut self, mut stream: Stream) -> Option<WebSocket<Stream>> {
+	pub async fn upgrade<'a>(
+		&'a mut self,
+		mut stream: &'a mut Stream,
+	) -> Option<crate::WebSocket<'a>> {
 		if !self.is_websocket() {
 			return None;
 		}
@@ -63,15 +65,13 @@ impl Request {
 /// Tries to upgrade a request to a WebSocket connection, ignoring errors.
 /// If upgrading succeeds, the WebSocket is passed to `self.ws_handler`.
 /// Does nothing if the request is not a WebSocket handshake request.
-#[cfg(feature = "websocket")]
-pub async fn maybe_websocket<F, R>(
+pub async fn maybe_websocket<F>(
 	handler: Option<(&'static str, F)>,
-	stream: &mut Stream,
+	mut stream: &mut Stream,
 	req: &mut Request,
 ) -> bool
 where
-	F: Fn(WebSocket<&mut Stream>) -> R,
-	R: Future<Output = ()>,
+	F: Fn(crate::WebSocket<'_>),
 {
 	let handler = match handler {
 		Some((path, f)) if req.url.starts_with(path) => f,
@@ -79,6 +79,6 @@ where
 	};
 
 	// Calls `handler` if `request.upgrade(..)` returns `Some(..)`.
-	req.upgrade(stream).await.map(handler);
+	req.upgrade(&mut stream).await.map(handler);
 	true
 }
