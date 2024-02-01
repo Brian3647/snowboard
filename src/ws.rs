@@ -38,10 +38,7 @@ impl Request {
 
 	/// Upgrades a request to a WebSocket connection.
 	/// Returns `None` if the request is not a WebSocket handshake request.
-	pub async fn upgrade<'a>(
-		&'a mut self,
-		mut stream: &'a mut Stream,
-	) -> Option<crate::WebSocket<'a>> {
+	pub async fn upgrade<'a>(&'a mut self, stream: &'a mut Stream) -> Option<crate::WebSocket<'a>> {
 		if !self.is_websocket() {
 			return None;
 		}
@@ -50,7 +47,7 @@ impl Request {
 		let handshake = build_handshake(ws_key);
 
 		crate::Response::switching_protocols(vec![], Some(handshake))
-			.send_to(&mut stream)
+			.send_to(stream)
 			.await
 			.ok()?;
 
@@ -67,7 +64,7 @@ impl Request {
 /// Does nothing if the request is not a WebSocket handshake request.
 pub async fn maybe_websocket<F>(
 	handler: Option<(&'static str, F)>,
-	mut stream: &mut Stream,
+	stream: &mut Stream,
 	req: &mut Request,
 ) -> bool
 where
@@ -79,6 +76,6 @@ where
 	};
 
 	// Calls `handler` if `request.upgrade(..)` returns `Some(..)`.
-	req.upgrade(&mut stream).await.map(handler);
+	req.upgrade(stream).await.map(handler);
 	true
 }

@@ -17,6 +17,9 @@ use crate::{Request, Response, ResponseLike, Stream};
 /// Default buffer size for reading requests. (1 KiB)
 pub const DEFAULT_BUFFER_SIZE: usize = 1024;
 
+/// A websocket handler and the path it checks in.
+pub type WSHandler = (&'static str, fn(crate::WebSocket<'_>));
+
 /// Server implementation.
 pub struct Server<const BUFFER_SIZE: usize = DEFAULT_BUFFER_SIZE> {
 	/// The TLS acceptor, if TLS is enabled.
@@ -26,7 +29,7 @@ pub struct Server<const BUFFER_SIZE: usize = DEFAULT_BUFFER_SIZE> {
 	/// Whether to insert default headers or not. (true by default)
 	insert_default_headers: bool,
 	/// WebSocket path and handler.
-	ws_handler: Option<(&'static str, fn(crate::WebSocket<'_>))>,
+	ws_handler: Option<WSHandler>,
 }
 
 impl Server<DEFAULT_BUFFER_SIZE> {
@@ -59,7 +62,7 @@ impl<const BUFFER_SIZE: usize> Server<BUFFER_SIZE> {
 		addr: impl ToSocketAddrs,
 		insert_default_headers: bool,
 		tls: Option<TlsAcceptor>,
-		ws_handler: Option<(&'static str, fn(crate::WebSocket<'_>))>,
+		ws_handler: Option<WSHandler>,
 	) -> io::Result<Server<BUFFER_SIZE>> {
 		Ok(Self {
 			tls,
@@ -161,11 +164,11 @@ impl<const BUFFER_SIZE: usize> Server<BUFFER_SIZE> {
 	}
 
 	/// Sends a response to the given stream, adding default headers if needed.
-	pub async fn send(&self, mut stream: &mut Stream, mut res: Response) -> io::Result<()> {
+	pub async fn send(&self, stream: &mut Stream, mut res: Response) -> io::Result<()> {
 		if self.insert_default_headers {
 			res.with_default_headers().send_to(stream).await
 		} else {
-			res.send_to(&mut stream).await
+			res.send_to(stream).await
 		}
 	}
 
@@ -213,18 +216,18 @@ impl<const BUFFER_SIZE: usize> Server<BUFFER_SIZE> {
 		R: Future<Output = Y>,
 		Y: ResponseLike,
 	{
-		let (mut stream, addr) = req;
+		let (stream, addr) = req;
 		let mut buffer = [0u8; BUFFER_SIZE];
 		let read = stream.read(&mut buffer).await?;
 		let bytes = &buffer[..read];
 
-		let Some(mut req) = Request::new(&bytes, addr) else {
+		let Some(mut req) = Request::new(bytes, addr) else {
 			let mut res = Response::bad_request("Failed to parse request".into(), None);
-			res.send_to(&mut stream).await?;
+			res.send_to(stream).await?;
 			return Ok(false);
 		};
 
-		if crate::ws::maybe_websocket(self.ws_handler, &mut stream, &mut req).await {
+		if crate::ws::maybe_websocket(self.ws_handler, stream, &mut req).await {
 			return Ok(false); // WebSocket handled
 		}
 
