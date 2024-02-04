@@ -1,8 +1,8 @@
 //! A module that provides code to handle the websocketing funtionality of the server-client.
 
-use std::{collections::HashMap, io};
+use std::collections::HashMap;
 
-use crate::{headers, Request};
+use crate::{headers, Request, Stream};
 
 use base64::engine::general_purpose::STANDARD as BASE64ENGINE;
 use base64::Engine;
@@ -38,7 +38,7 @@ impl Request {
 
 	/// Upgrades a request to a WebSocket connection.
 	/// Returns `None` if the request is not a WebSocket handshake request.
-	pub fn upgrade<T: io::Write>(&mut self, mut stream: T) -> Option<WebSocket<T>> {
+	pub async fn upgrade<'a>(&'a mut self, stream: &'a mut Stream) -> Option<crate::WebSocket<'a>> {
 		if !self.is_websocket() {
 			return None;
 		}
@@ -46,8 +46,9 @@ impl Request {
 		let ws_key = self.headers.get("Sec-WebSocket-Key")?.clone();
 		let handshake = build_handshake(ws_key);
 
-		crate::response!(switching_protocols, [], handshake)
-			.send_to(&mut stream)
+		crate::Response::switching_protocols(vec![], Some(handshake))
+			.send_to(stream)
+			.await
 			.ok()?;
 
 		Some(WebSocket::from_raw_socket(
@@ -61,18 +62,20 @@ impl Request {
 /// Tries to upgrade a request to a WebSocket connection, ignoring errors.
 /// If upgrading succeeds, the WebSocket is passed to `self.ws_handler`.
 /// Does nothing if the request is not a WebSocket handshake request.
-#[cfg(feature = "websocket")]
-pub fn maybe_websocket<Stream: io::Write>(
-	handler: Option<(&'static str, fn(WebSocket<&mut Stream>))>,
+pub async fn maybe_websocket<F>(
+	handler: Option<(&'static str, F)>,
 	stream: &mut Stream,
 	req: &mut Request,
-) -> bool {
+) -> bool
+where
+	F: Fn(crate::WebSocket<'_>),
+{
 	let handler = match handler {
 		Some((path, f)) if req.url.starts_with(path) => f,
 		_ => return false,
 	};
 
 	// Calls `handler` if `request.upgrade(..)` returns `Some(..)`.
-	req.upgrade(stream).map(handler);
+	req.upgrade(stream).await.map(handler);
 	true
 }

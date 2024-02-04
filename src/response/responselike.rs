@@ -26,21 +26,21 @@ impl ResponseLike for () {
 impl ResponseLike for &str {
 	#[inline]
 	fn to_response(self) -> Response {
-		crate::response!(ok, self)
+		crate::Response::ok(self.into(), None)
 	}
 }
 
 impl ResponseLike for String {
 	#[inline]
 	fn to_response(self) -> Response {
-		crate::response!(ok, self)
+		crate::Response::ok(self.into(), None)
 	}
 }
 
 impl ResponseLike for Vec<u8> {
 	#[inline]
 	fn to_response(self) -> Response {
-		crate::response!(ok, self)
+		crate::Response::ok(self, None)
 	}
 }
 
@@ -64,12 +64,11 @@ impl ResponseLike for serde_json::Error {
 	fn to_response(self) -> Response {
 		let bytes = self.to_string().into_bytes();
 
-		crate::response!(
-			bad_request,
+		crate::Response::bad_request(
 			bytes,
-			crate::headers! {
+			Some(crate::headers! {
 				"Content-Type" => "text/plain; charset=utf-8",
-			}
+			}),
 		)
 	}
 }
@@ -80,12 +79,11 @@ impl ResponseLike for serde_json::Value {
 	fn to_response(self) -> Response {
 		let bytes = serde_json::to_vec(&self).unwrap_or_else(|_| self.to_string().into_bytes());
 
-		crate::response!(
-			ok,
+		crate::Response::ok(
 			bytes,
-			crate::headers! {
+			Some(crate::headers! {
 				"Content-Type" => "application/json; charset=utf-8",
-			}
+			}),
 		)
 	}
 }

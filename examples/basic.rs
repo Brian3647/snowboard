@@ -1,13 +1,14 @@
 use snowboard::{headers, response, Method, Server};
 
-fn main() -> snowboard::Result {
+#[tokio::main]
+async fn main() -> snowboard::Result {
 	let data = "Hello, world!";
 
-	let server = Server::new("localhost:8080")?;
+	let server = Server::from_defaults("localhost:3000")?;
 
-	println!("Listening on {}", server.pretty_addr()?);
+	println!("Listening on {}", server.pretty_addr());
 
-	server.run(move |mut req| {
+	server.run(move |mut req| async move {
 		if req.method == Method::DELETE {
 			return response!(method_not_allowed, "Caught you trying to delete!");
 		}

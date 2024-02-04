@@ -6,9 +6,10 @@ mod responselike;
 
 pub use responselike::ResponseLike;
 
-use std::{collections::HashMap, fmt, io};
+use std::{collections::HashMap, fmt};
+use tokio::io;
 
-use crate::HttpVersion;
+use crate::{server::stream::Stream, HttpVersion};
 
 /// The default HTTP version used by the server.
 pub const DEFAULT_HTTP_VERSION: HttpVersion = HttpVersion::V1_1;
@@ -39,14 +40,13 @@ impl Response {
 	/// Manually create a Response instance.
 	/// Use Response::ok(), Response::bad_request() etc. instead when possible.
 	pub fn new(
-		version: HttpVersion,
 		status: u16,
 		status_text: &'static str,
 		bytes: Vec<u8>,
 		headers: Option<Headers>,
 	) -> Self {
 		Self {
-			version,
+			version: DEFAULT_HTTP_VERSION,
 			status,
 			status_text,
 			bytes,
@@ -55,11 +55,11 @@ impl Response {
 	}
 
 	/// Writes the response, consuming its body.
-	pub fn send_to<T: io::Write>(&mut self, stream: &mut T) -> Result<(), io::Error> {
+	pub async fn send_to(&mut self, stream: &mut Stream) -> Result<(), io::Error> {
 		let prev = self.prepare_response().into_bytes();
-		stream.write_all(&prev)?;
-		stream.write_all(&self.bytes)?;
-		stream.flush()
+		stream.write(&prev).await?;
+		stream.write(&self.bytes).await?;
+		stream.flush().await
 	}
 
 	/// Sets a header to the response, returning the response itself.
@@ -133,15 +133,6 @@ impl Response {
 		self.set_header("Content-Length", len.to_string())
 			.set_header("Date", now)
 			.set_header("Server", "Snowboard".into());
-
-		self
-	}
-
-	/// Used internally to add default headers if needed.
-	pub(crate) fn maybe_add_defaults(mut self, should_insert: bool) -> Self {
-		if should_insert {
-			self = self.with_default_headers();
-		}
 
 		self
 	}

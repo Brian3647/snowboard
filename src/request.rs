@@ -84,9 +84,25 @@ impl Request {
 		let value = &rest[1..rest.len() - 1];
 
 		Some((
-			String::from_utf8_lossy(key).trim().to_string(),
-			String::from_utf8_lossy(value).trim().to_string(),
+			String::from_utf8_lossy(Self::trim_bytes(key)).into(),
+			String::from_utf8_lossy(Self::trim_bytes(value)).into(),
 		))
+	}
+
+	/// Trims a byte slice to remove the leading and trailing whitespaces,
+	/// without allocating for a new string twice.
+	fn trim_bytes(bytes: &[u8]) -> &[u8] {
+		let start = bytes
+			.iter()
+			.position(|&b| !b.is_ascii_whitespace())
+			.unwrap_or(0);
+
+		let end = bytes
+			.iter()
+			.rposition(|&b| !b.is_ascii_whitespace())
+			.map_or(0, |i| i + 1);
+
+		&bytes[start..end]
 	}
 
 	/// Safely gets a header.
@@ -177,6 +193,6 @@ impl Request {
 
 	/// Get the IP address of the client, formatted.
 	pub fn pretty_ip(&self) -> String {
-		crate::util::format_addr(self.ip)
+		crate::util::format_addr(&self.ip)
 	}
 }

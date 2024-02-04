@@ -1,6 +1,6 @@
-use snowboard::{response, Request, ResponseLike, Result, Server};
+use snowboard::{response, Request, ResponseLike, Server};
 
-fn router(req: Request) -> impl ResponseLike {
+async fn router(req: Request) -> impl ResponseLike {
 	// /{x}
 	match req.parse_url().at(0) {
 		Some("ping") => response!(ok, "Pong!"),
@@ -10,6 +10,8 @@ fn router(req: Request) -> impl ResponseLike {
 	}
 }
 
-fn main() -> Result {
-	Server::new("localhost:8080")?.run(router);
+fn main() {
+	Server::from_defaults("localhost:3000")
+		.expect("Failed to get addr")
+		.run(router)
 }

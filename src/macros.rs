@@ -14,37 +14,33 @@
 /// // Note that $body requires to implement `Into<Vec<u8>>`.
 /// let response =  response!(internal_server_error, "oopsies");
 ///
-/// // Response with body, headers and custom HTTP version.
+/// // Response with body, & headers.
 /// let body = "everything's fine!";
 /// let headers = headers! {
 ///     "Content-Type" => "text/html",
 ///     "X-Hello" => "World!",
 ///     "X-Number" => 42,
 /// };
-/// let response = response!(ok, body, headers, HttpVersion::V1_0);
+/// let response = response!(ok, body, headers);
 /// ```
 ///
 /// See [headers!](crate::headers) for more information about the headers macro.
 #[macro_export]
 macro_rules! response {
 	(ok) => {
-		$crate::Response::default()
+		::snowboard::Response::default()
 	};
 
 	($type:ident) => {
-		$crate::Response::$type(vec![], None, $crate::DEFAULT_HTTP_VERSION)
+		::snowboard::Response::$type(vec![], None)
 	};
 
 	($type:ident,$body:expr) => {
-		$crate::Response::$type($body.into(), None, $crate::DEFAULT_HTTP_VERSION)
+		::snowboard::Response::$type($body.into(), None)
 	};
 
 	($type:ident,$body:expr,$headers:expr) => {
-		$crate::Response::$type($body.into(), Some($headers), $crate::DEFAULT_HTTP_VERSION)
-	};
-
-	($type:ident,$body:expr,$headers:expr,$http_version:expr) => {
-		$crate::Response::$type($body.into(), Some($headers), $http_version)
+		::snowboard::Response::$type($body.into(), Some($headers))
 	};
 }
 
