@@ -244,7 +244,7 @@ impl<const BUFFER_SIZE: usize> Server<BUFFER_SIZE> {
 			return Ok(false); // WebSocket handled
 		}
 
-		let should_continue = match req.get_header("connection") {
+		let should_continue = match req.get_header("Connection") {
 			Some("close") | None => false,
 			_ => true, // keep-alive
 		};
