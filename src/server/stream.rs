@@ -16,6 +16,23 @@ pub enum Stream {
 	Secure(TlsStream<TcpStream>),
 }
 
+/// Adds a function to the `Stream` enum.
+macro_rules! call_from_inner {
+	($name:ident, $desc:literal, $ret:ty) => {
+		#[doc = $desc]
+		#[inline]
+		pub async fn $name(&mut self) -> io::Result<$ret> {
+			match self {
+				Self::Normal(stream) => stream.$name().await,
+				Self::Secure(stream) => stream.$name().await,
+			}
+		}
+	};
+	($name:ident, $desc:literal) => {
+		call_from_inner!($name, $desc, ());
+	};
+}
+
 impl Stream {
 	/// Writes the given data to the stream.
 	#[inline]
@@ -23,15 +40,6 @@ impl Stream {
 		match self {
 			Self::Normal(stream) => stream.write_all(data).await,
 			Self::Secure(stream) => stream.write_all(data).await,
-		}
-	}
-
-	/// Flushes the stream.
-	#[inline]
-	pub async fn flush(&mut self) -> io::Result<()> {
-		match self {
-			Self::Normal(stream) => stream.flush().await,
-			Self::Secure(stream) => stream.flush().await,
 		}
 	}
 
@@ -43,4 +51,7 @@ impl Stream {
 			Self::Secure(stream) => stream.read(buffer).await,
 		}
 	}
+
+	call_from_inner!(shutdown, "Shuts down the stream.");
+	call_from_inner!(flush, "Flushes the stream.");
 }

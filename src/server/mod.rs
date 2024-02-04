@@ -7,6 +7,7 @@ use std::{
 	io,
 	net::{SocketAddr, ToSocketAddrs},
 	sync::Arc,
+	time::Duration,
 };
 
 use tokio::net::{TcpListener, TcpStream};
@@ -93,19 +94,21 @@ impl<const BUFFER_SIZE: usize> Server<BUFFER_SIZE> {
 	}
 
 	/// Sets whether to insert default headers or not.
-	/// Default is true.
+	/// Default is `true`.
+	#[inline]
 	pub fn insert_default_headers(mut self, insert: bool) -> Self {
 		self.insert_default_headers = insert;
 		self
 	}
 
 	/// Returns the address the server is listening on.
+	#[inline]
 	pub fn addr(&self) -> &SocketAddr {
 		&self.addr
 	}
 
 	/// Returns a pretty string of the address the server is listening on.
-	/// Assumes `self.addrs[0]` is the main address.
+	#[inline]
 	pub fn pretty_addr(&self) -> String {
 		crate::util::format_addr(&self.addr)
 	}
@@ -124,17 +127,21 @@ impl<const BUFFER_SIZE: usize> Server<BUFFER_SIZE> {
 	/// returning if an error occurs. This is only recommended
 	/// if your main thread is running the server/you're using it
 	/// on a `main` function. Otherwise, use [`Server::checked_run`].
+	/// This checks `tokio` for a current runtime, and if there is one,
+	/// it creates one to run the server.
 	pub fn run<F, R, Y>(self, handler: F) -> !
 	where
 		F: Fn(Request) -> R + Send + Sync + 'static,
 		R: Future<Output = Y> + Send + 'static,
 		Y: ResponseLike + 'static,
 	{
-		tokio::task::spawn(async move {
+		let fut = async move {
 			self.checked_run(handler).await.unwrap();
-		});
+		};
+
+		tokio::task::spawn(fut);
 		loop {
-			std::thread::park();
+			std::thread::sleep(Duration::MAX);
 		}
 	}
 
@@ -158,7 +165,7 @@ impl<const BUFFER_SIZE: usize> Server<BUFFER_SIZE> {
 			let self_ = Arc::clone(&self_arc);
 
 			tokio::spawn(async move {
-				let _ = self_.handle_raw_tcp(req, handler).await;
+				self_.handle_raw_tcp(req, handler).await.unwrap();
 			});
 		}
 	}
@@ -197,9 +204,15 @@ impl<const BUFFER_SIZE: usize> Server<BUFFER_SIZE> {
 			Stream::Normal(req.0)
 		};
 
-		while let Ok(true) = self.handle_stream((&mut stream, req.1), &handler).await {}
-
-		stream.flush().await
+		loop {
+			match self.handle_stream((&mut stream, req.1), &handler).await {
+				Ok(false) => break,
+				Err(e) if e.kind() == io::ErrorKind::BrokenPipe => break,
+				Err(other) => return Err(other),
+				_ => continue,
+			}
+		}
+		Ok(())
 	}
 
 	/// Reads a request from the given stream and sends a response.

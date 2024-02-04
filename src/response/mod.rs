@@ -54,12 +54,12 @@ impl Response {
 		}
 	}
 
-	/// Writes the response, consuming its body. Note this does not
-	/// flush the stream, so you'll have to do that yourself.
+	/// Writes the response, consuming its body.
 	pub async fn send_to(&mut self, stream: &mut Stream) -> Result<(), io::Error> {
 		let prev = self.prepare_response().into_bytes();
 		stream.write(&prev).await?;
-		stream.write(&self.bytes).await
+		stream.write(&self.bytes).await?;
+		stream.flush().await
 	}
 
 	/// Sets a header to the response, returning the response itself.
